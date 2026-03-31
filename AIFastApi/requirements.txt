@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pandas 
+scikit-learn
+joblib
+celery
+redis
+torch
+transformers
+accelerate
