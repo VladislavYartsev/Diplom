@@ -1,0 +1,109 @@
+﻿@model OnlineAPI.Entities.CreateProjectViewModel
+@{
+    ViewData["Title"] = "Создать проект";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создать проект - TaskFlow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="~/css/taskboard.css">
+    
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">
+                <h1><i class="fas fa-tasks"></i> <span>TaskFlow</span></h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="@Url.Action("Index", "Projects")"><i class="fas fa-layer-group"></i> <span>Проекты</span></a></li>
+                <li><a href="@Url.Action("Create", "Projects")" class="active"><i class="fas fa-plus"></i> <span>Создать проект</span></a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="user-actions">
+                    <div class="user-dropdown">
+                        <div class="dropdown-toggle">
+                            <div class="avatar">
+                                @((User.FindFirst("DisplayName")?.Value ?? User.Identity.Name)?[0].ToString().ToUpper())
+                            </div>
+                            <i class="fas fa-chevron-down" style="font-size: 12px; color: #6b778c;"></i>
+                        </div>
+                        <div class="dropdown-menu">
+                            <div class="user-info">
+                                <div class="user-name">@(User.FindFirst("DisplayName")?.Value ?? User.Identity.Name)</div>
+                                <div class="user-role">Пользователь</div>
+                            </div>
+                            <a href="@Url.Action("Index", "Profile")" class="dropdown-item">
+                                <i class="fas fa-user"></i>
+                                <span>Мой профиль</span>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <form method="post" asp-action="Logout" asp-controller="Auth" class="dropdown-item-form">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="dropdown-item">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Выйти</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="create-project-container">
+                <div class="board-header">
+                    <div class="board-title">
+                        <h2>Создание нового проекта</h2>
+                    </div>
+                    <div class="board-actions">
+                        <a href="@Url.Action("Index", "Projects")" class="btn btn-outline">
+                            <i class="fas fa-arrow-left"></i> Назад к проектам
+                        </a>
+                    </div>
+                </div>
+
+                <div class="limits-notice">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Ограничение:</strong> Вы можете создать только 1 проект. Вы можете участвовать в 5 проектах.
+                </div>
+
+                <form method="post" class="task-form">
+                    @Html.AntiForgeryToken()
+
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label asp-for="Name">Название проекта *</label>
+                            <input asp-for="Name" class="form-control" placeholder="Введите название проекта" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Description">Описание проекта</label>
+                            <textarea asp-for="Description" class="form-control" placeholder="Опишите ваш проект" rows="4"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-actions">
+                            <a href="@Url.Action("Index", "Projects")" class="btn btn-outline">Отмена</a>
+                            <button type="submit" class="btn btn-primary">Создать проект</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Подключение клиентской валидации -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+</body>
+</html>

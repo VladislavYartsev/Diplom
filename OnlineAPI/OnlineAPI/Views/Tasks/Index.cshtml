@@ -1,0 +1,294 @@
+﻿@model IEnumerable<OnlineAPI.Entities.Task>
+@{
+    ViewData["Title"] = "Доска задач";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Управление задачами</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="~/css/taskboard.css">
+
+</head>
+<body>
+    <div class="container">
+        <!-- Сайдбар -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1><i class="fas fa-tasks"></i> <span>TaskFlow</span></h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="@Url.Action("Index", "Projects")"><i class="fas fa-layer-group"></i> <span>Проекты</span></a></li>
+                <li><a href=""><i class="fas fa-list-check"></i> <span>Доска</span></a></li>
+                <li><a href="@Url.Action("Index", "Reports", new { projectId = ViewBag.ProjectId})"><i class="fas fa-chart-bar"></i> <span>Отчеты</span></a></li>
+                <li><a href="@Url.Action("Index", "ProjectSettings", new { projectId = ViewBag.ProjectId })" class="btn btn-outline"><i class="fas fa-cog"></i> Настройки</a></li>
+            </ul>
+        </div>
+
+        <!-- Основное содержимое -->
+        <div class="main-content">
+            <!-- Верхняя панель -->
+            <div class="top-bar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Поиск задач...">
+                </div>
+                <div class="user-actions">
+                    <button class="btn btn-outline"><i class="fas fa-bell"></i></button>
+
+                    <!-- Выпадающее меню профиля -->
+                    <div class="user-dropdown">
+                        <div class="dropdown-toggle">
+                            <div class="avatar">
+                                @if (User.Identity.IsAuthenticated)
+                                {
+                                    @((User.FindFirst("DisplayName")?.Value ?? User.Identity.Name)?[0].ToString().ToUpper())
+                                }
+                                else
+                                {
+                                    @:U
+                                }
+                            </div>
+                            <i class="fas fa-chevron-down" style="font-size: 12px; color: #6b778c;"></i>
+                        </div>
+                        <div class="dropdown-menu">
+                            <div class="user-info">
+                                @if (User.Identity.IsAuthenticated)
+                                {
+                                    <div class="user-name">@(User.FindFirst("DisplayName")?.Value ?? User.Identity.Name)</div>
+                                    <div class="user-role">Пользователь</div>
+                                }
+                                else
+                                {
+                                    <div class="user-name">Гость</div>
+                                    <div class="user-role">Не авторизован</div>
+                                }
+                            </div>
+
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <a href="@Url.Action("Index", "Profile")" class="dropdown-item">
+                                    <i class="fas fa-user"></i>
+                                    <span>Мой профиль</span>
+                                </a>
+                                <a href="@Url.Action("Edit", "Profile")" class="dropdown-item">
+                                    <i class="fas fa-edit"></i>
+                                    <span>Редактировать профиль</span>
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <form method="post" asp-action="Logout" asp-controller="Auth" class="dropdown-item-form">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Выйти</span>
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("Login", "Auth")" class="dropdown-item">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                    <span>Войти</span>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Заголовок доски -->
+            <div class="board-header">
+                <div class="board-title">
+                    <h2>Доска проекта: Веб-разработка</h2>
+                </div>
+                <div class="board-actions">
+                    <button class="btn btn-outline"><i class="fas fa-filter"></i> Фильтр</button>
+                    <a href="@Url.Action("Create", "Tasks", new { projectId = ViewBag.ProjectId })" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Создать задачу
+                    </a>
+                </div>
+            </div>
+
+            <!-- Фильтры -->
+            <div class="filters">
+                <div class="filter-item active"><i class="fas fa-user"></i> Мои задачи</div>
+                <div class="filter-item"><i class="fas fa-clock"></i> Недавние</div>
+                <div class="filter-item"><i class="fas fa-fire"></i> Срочные</div>
+            </div>
+
+            <!-- Доска задач -->
+            <div class="board">
+                <!-- Колонка: Нужно сделать -->
+                <div class="column">
+                    <div class="column-header">
+                        <div class="column-title">
+                            <i class="fas fa-circle" style="color: #ff5630;"></i>
+                            <span>Нужно сделать</span>
+                            <span class="task-count">@Model.Count(t => t.Status == OnlineAPI.Entities.TaskStatus.ToDo)</span>
+                        </div>
+                        <div class="add-task">
+                            <a href="@Url.Action("Create", "Tasks", new { projectId = ViewBag.ProjectId })"><i class="fas fa-plus"></i></a>
+                        </div>
+                    </div>
+                    <div class="tasks-container">
+                        @foreach (var task in Model.Where(t => t.Status == OnlineAPI.Entities.TaskStatus.ToDo))
+                        {
+                            <div class="task">
+                                <div class="task-priority priority-@task.Priority.ToString().ToLower()"></div>
+                                <div class="task-title">@task.Title</div>
+                                <div class="task-desc">@task.Description</div>
+                                <div class="task-meta">
+                                    <span><i class="fas fa-list"></i> @task.TaskCode</span>
+                                    <div class="task-assignee">
+                                        <div class="assignee-avatar">@task.Assignee</div>
+                                    </div>
+                                </div>
+                                <div class="task-actions">
+                                    <form method="post" action="@Url.Action("Move", "Tasks")">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="taskId" value="@task.Id" />
+                                        <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.InProgress" />
+                                        <button type="submit" class="action-btn"><i class="fas fa-arrow-right"></i> В работу</button>
+                                    </form>
+                                    <a href="@Url.Action("Edit", "Tasks", new { id = task.Id })" class="action-btn"><i class="fas fa-edit"></i> Редактировать</a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Колонка: В работе -->
+                <div class="column">
+                    <div class="column-header">
+                        <div class="column-title">
+                            <i class="fas fa-circle" style="color: #ffab00;"></i>
+                            <span>В работе</span>
+                            <span class="task-count">@Model.Count(t => t.Status == OnlineAPI.Entities.TaskStatus.InProgress)</span>
+                        </div>
+                        <div class="add-task">
+                            <a href="@Url.Action("Create", "Tasks")"><i class="fas fa-plus"></i></a>
+                        </div>
+                    </div>
+                    <div class="tasks-container">
+                        @foreach (var task in Model.Where(t => t.Status == OnlineAPI.Entities.TaskStatus.InProgress))
+                        {
+                            <div class="task">
+                                <div class="task-priority priority-@task.Priority.ToString().ToLower()"></div>
+                                <div class="task-title">@task.Title</div>
+                                <div class="task-desc">@task.Description</div>
+                                <div class="task-meta">
+                                    <span><i class="fas fa-list"></i> @task.TaskCode</span>
+                                    <div class="task-assignee">
+                                        <div class="assignee-avatar">@task.Assignee</div>
+                                    </div>
+                                </div>
+                                <div class="task-actions">
+                                    <form method="post" action="@Url.Action("Move", "Tasks")">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="taskId" value="@task.Id" />
+                                        <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.ToDo" />
+                                        <button type="submit" class="action-btn"><i class="fas fa-arrow-left"></i> Назад</button>
+                                    </form>
+                                    <form method="post" action="@Url.Action("Move", "Tasks")">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="taskId" value="@task.Id" />
+                                        <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.Review" />
+                                        <button type="submit" class="action-btn">В ревью <i class="fas fa-arrow-right"></i></button>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Колонка: На проверке -->
+                <div class="column">
+                    <div class="column-header">
+                        <div class="column-title">
+                            <i class="fas fa-circle" style="color: #0052cc;"></i>
+                            <span>На проверке</span>
+                            <span class="task-count">@Model.Count(t => t.Status == OnlineAPI.Entities.TaskStatus.Review)</span>
+                        </div>
+                        <div class="add-task">
+                            <a href="@Url.Action("Create", "Tasks", new {ProjectId = ViewBag.ProjectId})"><i class="fas fa-plus"></i></a>
+                        </div>
+                    </div>
+                    <div class="tasks-container">
+                        @foreach (var task in Model.Where(t => t.Status == OnlineAPI.Entities.TaskStatus.Review))
+                        {
+                            <div class="task">
+                                <div class="task-priority priority-@task.Priority.ToString().ToLower()"></div>
+                                <div class="task-title">@task.Title</div>
+                                <div class="task-desc">@task.Description</div>
+                                <div class="task-meta">
+                                    <span><i class="fas fa-list"></i> @task.TaskCode</span>
+                                    <div class="task-assignee">
+                                        <div class="assignee-avatar">@task.Assignee</div>
+                                    </div>
+                                </div>
+                                <div class="task-actions">
+                                    <form method="post" action="@Url.Action("Move", "Tasks")">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="taskId" value="@task.Id" />
+                                        <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.InProgress" />
+                                        <button type="submit" class="action-btn"><i class="fas fa-arrow-left"></i> Назад</button>
+                                    </form>
+                                    <form method="post" action="@Url.Action("Move", "Tasks")">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="taskId" value="@task.Id" />
+                                        <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.Done" />
+                                        <button type="submit" class="action-btn">Готово <i class="fas fa-arrow-right"></i></button>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Колонка: Готово -->
+                <div class="column">
+                    <div class="column-header">
+                        <div class="column-title">
+                            <i class="fas fa-circle" style="color: #36b37e;"></i>
+                            <span>Готово</span>
+                            <span class="task-count">@Model.Count(t => t.Status == OnlineAPI.Entities.TaskStatus.Done)</span>
+                        </div>
+                        <div class="add-task">
+                            <a href="@Url.Action("Create", "Tasks")"><i class="fas fa-plus"></i></a>
+                        </div>
+                    </div>
+                    <div class="tasks-container">
+                        @foreach (var task in Model.Where(t => t.Status == OnlineAPI.Entities.TaskStatus.Done))
+                        {
+                            <div class="task">
+                                <div class="task-priority priority-@task.Priority.ToString().ToLower()"></div>
+                                <div class="task-title">@task.Title</div>
+                                <div class="task-desc">@task.Description</div>
+                                <div class="task-meta">
+                                    <span><i class="fas fa-list"></i> @task.TaskCode</span>
+                                    <div class="task-assignee">
+                                        <div class="assignee-avatar">@task.Assignee</div>
+                                    </div>
+                                </div>
+                                <div class="task-actions">
+                                    <form method="post" action="@Url.Action("Move", "Tasks")">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="taskId" value="@task.Id" />
+                                        <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.Review" />
+                                        <button type="submit" class="action-btn"><i class="fas fa-arrow-left"></i> Назад</button>
+                                    </form>
+                                    <a href="@Url.Action("Edit", "Tasks", new { id = task.Id })" class="action-btn"><i class="fas fa-edit"></i> Редактировать</a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

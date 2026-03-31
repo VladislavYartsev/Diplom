@@ -1,0 +1,541 @@
+﻿@model OnlineAPI.Entities.ProjectSettingsViewModel
+@{
+    
+    ViewData["Title"] = "Настройки проекта";
+    Layout = null;
+
+    var projectId = Model?.Id ?? 0;
+    var canEdit = Model?.CanEdit ?? false;
+    var modelName = Model?.Name ?? "Неизвестный проект";
+    var modelDescription = Model?.Description ?? string.Empty;
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки проекта - TaskFlow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="~/css/taskboard.css">
+    <style>
+        .settings-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 25px;
+        }
+
+        .settings-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e1e5e9;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #172b4d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .members-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .member-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #fafbfc;
+        }
+
+        .member-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 16px;
+        }
+
+        .member-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .member-name {
+            font-weight: 600;
+            color: #172b4d;
+        }
+
+        .member-email {
+            color: #6b778c;
+            font-size: 13px;
+        }
+
+        .member-role {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .role-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .role-owner {
+            background: #e3fcef;
+            color: #006644;
+        }
+
+        .role-admin {
+            background: #e9f2ff;
+            color: #0052cc;
+        }
+
+        .role-member {
+            background: #f4f5f7;
+            color: #6b778c;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            padding: 6px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: transparent;
+            transition: background-color 0.2s;
+        }
+
+        .btn-edit:hover {
+            background: #e9f2ff;
+            color: #0052cc;
+        }
+
+        .btn-remove:hover {
+            background: #ffebee;
+            color: #dc3545;
+        }
+
+        .readonly-field {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 4px;
+            border: 1px solid #e1e5e9;
+            min-height: 38px;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e5e9;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .alert-info {
+            background: #e9f2ff;
+            border: 1px solid #b3d4ff;
+            color: #0052cc;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b778c;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #dfe1e6;
+        }
+
+        .role-select {
+            min-width: 120px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">
+                <h1><i class="fas fa-tasks"></i> <span>TaskFlow</span></h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="@Url.Action("Index", "Projects")"><i class="fas fa-layer-group"></i> <span>Проекты</span></a></li>
+                <li><a href="@Url.Action("Index", "Tasks", new { projectId = Model.Id })"><i class="fas fa-list-check"></i> <span>Доска</span></a></li>
+                <li><a href="@Url.Action("Index", "Reports", new { projectId = Model.Id })"><i class="fas fa-chart-pie"></i> <span>Отчеты</span></a></li>
+                <li><a href="@Url.Action("Index", "ProjectSettings", new { projectId = Model.Id })" class="active"><i class="fas fa-cog"></i> <span>Настройки</span></a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="user-actions">
+                    <div class="user-dropdown">
+                        <div class="dropdown-toggle">
+                            <div class="avatar">
+                                @((User.FindFirst("DisplayName")?.Value ?? User.Identity.Name)?[0].ToString().ToUpper())
+                            </div>
+                            <i class="fas fa-chevron-down" style="font-size: 12px; color: #6b778c;"></i>
+                        </div>
+                        <div class="dropdown-menu">
+                            <div class="user-info">
+                                <div class="user-name">@(User.FindFirst("DisplayName")?.Value ?? User.Identity.Name)</div>
+                                <div class="user-role">Пользователь</div>
+                            </div>
+                            <a href="@Url.Action("Index", "Profile")" class="dropdown-item">
+                                <i class="fas fa-user"></i>
+                                <span>Мой профиль</span>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <form method="post" asp-action="Logout" asp-controller="Auth" class="dropdown-item-form">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="dropdown-item">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Выйти</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-container">
+                <div class="reports-header">
+                    <div>
+                        <h2>Настройки проекта</h2>
+                        <p style="color: #6b778c; margin-top: 5px;">Управление основными настройками и участниками проекта</p>
+                    </div>
+                    <div class="board-actions">
+                        <a href="@Url.Action("Index", "Tasks", new { projectId = Model.Id })" class="btn btn-outline">
+                            <i class="fas fa-arrow-left"></i> Назад к задачам
+                        </a>
+                    </div>
+                </div>
+
+                @if (!Model.CanEdit)
+                {
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Режим просмотра:</strong> Вы можете только просматривать настройки. Для внесения изменений обратитесь к владельцу проекта.
+                    </div>
+                }
+
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <i class="fas fa-sliders-h"></i>
+                            <span>Основные настройки</span>
+                        </div>
+                    </div>
+
+                    <form id="projectForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ProjectId" value="@Model.Id" />
+
+                        <div class="form-group">
+                            <label>Название проекта</label>
+                            @if (Model.CanEdit)
+                            {
+                                <input type="text" name="Name" class="form-control" value="@Model.Name" />
+                                <span class="text-danger" id="nameError"></span>
+                            }
+                            else
+                            {
+                                <div class="readonly-field">@Model.Name</div>
+                            }
+                        </div>
+
+                        <div class="form-group">
+                            <label>Описание проекта</label>
+                            @if (Model.CanEdit)
+                            {
+                                <textarea name="Description" class="form-control" rows="4">@Model.Description</textarea>
+                                <span class="text-danger" id="descriptionError"></span>
+                            }
+                            else
+                            {
+                                <div class="readonly-field">@(string.IsNullOrEmpty(Model.Description) ? "Описание отсутствует" : Model.Description)</div>
+                            }
+                        </div>
+
+                        @if (Model.CanEdit)
+                        {
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-outline" onclick="resetForm()">Отмена</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Сохранить изменения
+                                </button>
+                            </div>
+                        }
+                    </form>
+                </div>
+
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <i class="fas fa-users"></i>
+                            <span>Участники проекта</span>
+                        </div>
+                        <span class="text-muted">@Model.Members.Count участников</span>
+                    </div>
+                    <div class="settings-subsection" style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 15px;">Добавить участника</h4>
+
+
+                        <form id="addMemberForm">
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label>Login пользователя</label>
+                                <input type="text" name="Login" class="form-control" placeholder="Введите login пользователя" required />
+                            </div>
+
+
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label>Роль</label>
+                                <select name="Role" class="form-control role-select" required>
+                                    <option value="Member">Участник</option>
+                                    <option value="Admin">Администратор</option>
+                                </select>
+                            </div>
+
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-plus"></i> Добавить в проект
+                            </button>
+                        </form>
+                    </div>
+                    <div class="members-list">
+                        @foreach (var member in Model?.Members)
+                        {
+                            <div class="member-item">
+                                <div class="member-info">
+                                    <div class="member-avatar">
+                                        @(member?.UserName?[0].ToString().ToUpper() ?? "?")
+                                    </div>
+                                    <div class="member-details">
+                                        <div class="member-name">@member.UserName</div>
+                                    </div>
+                                </div>
+                                <div class="member-role">
+                                    @if (member.CanChangeRole)
+                                    {
+                                        <select class="form-control role-select" onchange="updateMemberRole('@member.UserId', this.value)">
+                                            <option value="Member" selected="@(member.Role == "Member")">Участник</option>
+                                            <option value="Admin" selected="@(member.Role == "Admin")">Администратор</option>
+                                        </select>
+                                        <button class="btn-icon btn-remove" onclick="removeMember('@member.UserId')" title="Удалить из проекта">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="role-badge @($"role-{member.Role.ToLower()}")">
+                                            @switch (member.Role)
+                                            {
+                                                case "Owner":
+                                                    <i class="fas fa-crown">Владелец</i>
+                                                    
+                                                            break;
+                                                case "Admin":
+                                                    <i class="fas fa-shield-alt">Администратор</i>
+                                                    break;
+                                                case "Viewer":
+                                                    <i class="fas fa-shield-alt">Просмотр</i>
+                                                    break;
+                                                default:
+                                                    <i class="fas fa-user">Участник</i>
+                                                    
+                                                    break;
+                                            }
+                                        </span>
+                                        @if (member.IsCurrentUser)
+                                        {
+                                            <span class="text-muted">(Вы)</span>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Обновление проекта
+        $('#projectForm').on('submit', function(e) {
+            e.preventDefault();
+
+            const formData = {
+                ProjectId: $('input[name="ProjectId"]').val(),
+                Name: $('input[name="Name"]').val(),
+                Description: $('textarea[name="Description"]').val()
+            };
+
+            $.ajax({
+                url: '@Url.Action("UpdateProject", "ProjectSettings")',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        showAlert('success', response.message);
+                    } else {
+                        showAlert('error', response.message);
+                    }
+                },
+                error: function() {
+                    showAlert('error', 'Произошла ошибка при сохранении');
+                }
+            });
+        });
+
+        // Обновление роли участника
+        function updateMemberRole(userId, newRole) {
+            if (!confirm('Вы уверены, что хотите изменить роль участника?')) {
+                return;
+            }
+
+            const data = {
+                ProjectId: @Model.Id,
+                UserId: userId,
+                NewRole: newRole
+            };
+
+            $.ajax({
+                url: '@Url.Action("UpdateMemberRole", "ProjectSettings")',
+                type: 'POST',
+                data: data,
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        showAlert('success', response.message);
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showAlert('error', response.message);
+                    }
+                },
+                error: function() {
+                    showAlert('error', 'Произошла ошибка при обновлении роли');
+                }
+            });
+        }
+
+        // Удаление участника
+        function removeMember(userId) {
+            if (!confirm('Вы уверены, что хотите удалить участника из проекта?')) {
+                return;
+            }
+
+            const data = {
+                ProjectId: @Model.Id,
+                UserId: userId
+            };
+
+            $.ajax({
+                url: '@Url.Action("RemoveMember", "ProjectSettings")',
+                type: 'POST',
+                data: data,
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        showAlert('success', response.message);
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showAlert('error', response.message);
+                    }
+                },
+                error: function() {
+                    showAlert('error', 'Произошла ошибка при удалении участника');
+                }
+            });
+        }
+
+        // Сброс формы
+        function resetForm() {
+            document.getElementById('projectForm').reset();
+        }
+
+        // Показать уведомление
+        function showAlert(type, message) {
+            // Создаем элемент уведомления
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
+            alert.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle"></i>
+                ${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()" style="float: right; background: none; border: none; font-size: 16px;">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            // Добавляем в начало контейнера
+            const container = document.querySelector('.settings-container');
+            container.insertBefore(alert, container.firstChild);
+
+            // Автоматически удаляем через 5 секунд
+            setTimeout(() => {
+                if (alert.parentElement) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
