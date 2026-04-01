@@ -48,4 +48,11 @@ namespace OnlineAPI.Entities
         public int ProjectId { get; set; }
         public string UserId { get; set; }
     }
+
+    public class AddMemberRequest
+    {
+        public int ProjectId { get; set; }
+        public string Login { get; set; }
+        public ProjectRole Role { get; set; }
+    }
 }

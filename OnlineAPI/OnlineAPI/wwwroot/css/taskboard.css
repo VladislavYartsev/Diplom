@@ -503,6 +503,53 @@ textarea.form-control {
     margin-top: 20px;
 }
 
+.ai-select-wrap {
+    position: relative;
+}
+
+.loading {
+    font-style: italic;
+    color: #6b778c;
+    display: none;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+}
+
+.user-select-list {
+    border: 1px solid #dfe1e6;
+    border-radius: 6px;
+    padding: 8px;
+    max-height: 250px;
+    overflow-y: auto;
+    background: #f9fafb;
+}
+
+.user-select-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.user-select-item:hover {
+    background-color: #f4f5f7;
+}
+
+.user-select-input {
+    accent-color: #0052cc;
+}
+
+.user-select-name {
+    font-size: 14px;
+    color: #172b4d;
+}
+
 /* Адаптивность */
 @media (max-width: 1024px) {
     .sidebar {

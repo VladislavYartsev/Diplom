@@ -12,6 +12,7 @@
         public class ProjectSettingsController : Controller
         {
             private readonly AppContext _context;
+            private const int MAX_PROJECTS_PER_USER = 5;
 
             public ProjectSettingsController(AppContext context)
             {
@@ -172,6 +173,70 @@
                 await _context.SaveChangesAsync();
 
                 return Json(new { success = true, message = "Участник удален из проекта" });
+            }
+
+            [HttpPost]
+            [ValidateAntiForgeryToken]
+            public async Task<IActionResult> AddMember(AddMemberRequest request)
+            {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                var project = await _context.Projects
+                    .Include(p => p.Members)
+                    .FirstOrDefaultAsync(p => p.Id == request.ProjectId);
+
+                if (project == null)
+                {
+                    return Json(new { success = false, message = "Проект не найден" });
+                }
+
+                var currentUserMember = project.Members.FirstOrDefault(m => m.UserId == currentUserId);
+                var canEdit = currentUserMember?.Role == ProjectRole.Owner || currentUserMember?.Role == ProjectRole.Admin;
+                if (!canEdit)
+                {
+                    return Json(new { success = false, message = "Недостаточно прав для добавления участников" });
+                }
+
+                if (string.IsNullOrWhiteSpace(request.Login))
+                {
+                    return Json(new { success = false, message = "Укажите логин пользователя" });
+                }
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Login);
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "Пользователь не найден" });
+                }
+
+                var targetUserId = user.Id.ToString();
+
+                var alreadyMember = project.Members.Any(m => m.UserId == targetUserId);
+                if (alreadyMember)
+                {
+                    return Json(new { success = false, message = "Пользователь уже состоит в проекте" });
+                }
+
+                var userProjectsCount = await _context.ProjectMembers.CountAsync(pm => pm.UserId == targetUserId);
+                if (userProjectsCount >= MAX_PROJECTS_PER_USER)
+                {
+                    return Json(new { success = false, message = $"Пользователь уже участвует в {MAX_PROJECTS_PER_USER} проектах" });
+                }
+
+                var role = request.Role == ProjectRole.Owner ? ProjectRole.Member : request.Role;
+
+                var newMember = new ProjectMember
+                {
+                    ProjectId = project.Id,
+                    UserId = targetUserId,
+                    UserName = user.Username,
+                    Role = role,
+                    JoinedDate = DateTime.UtcNow
+                };
+
+                _context.ProjectMembers.Add(newMember);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Участник добавлен в проект" });
             }
         }
     }

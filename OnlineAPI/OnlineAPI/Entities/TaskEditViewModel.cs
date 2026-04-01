@@ -1,20 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace OnlineAPI.Entities
 {
-    namespace OnlineAPI.Entities
+    public class TaskEditViewModel
     {
-        public class TaskCreateViewModel
-        {
-            public int ID { get; set; }
-            public string Title { get; set; }
-            public string Discription { get; set; }
-            public TaskPriority TaskPriority { get; set; }
-            public int ProjectID { get; set; }
-            public List<int> SelectedUsers { get; set; } = new();
-            public List<SelectListItem> AvailableUsers { get; set; }
-
-        }
+        public int Id { get; set; }
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public TaskStatus Status { get; set; }
+        public TaskPriority Priority { get; set; }
+        public int ProjectId { get; set; }
+        public string[] SelectedUsers { get; set; } = Array.Empty<string>();
+        public List<SelectListItem> AvailableUsers { get; set; } = new();
     }
-
 }

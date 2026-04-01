@@ -37,8 +37,13 @@ namespace OnlineAPI.Controllers
 
             var project = await _context.Projects.FindAsync(projectId);
             var tasks = await _context.Tasks.Where(t => t.ProjectId == projectId).ToListAsync();
+            var memberNames = await _context.ProjectMembers
+                .Where(pm => pm.ProjectId == projectId)
+                .ToDictionaryAsync(pm => pm.UserId, pm => pm.UserName);
 
             ViewBag.ProjectId = projectId;
+            ViewBag.ProjectName = project?.Name ?? "Без названия";
+            ViewBag.MemberNames = memberNames;
             return View(tasks);
         }
         
@@ -124,21 +129,40 @@ namespace OnlineAPI.Controllers
                 {
                     return NotFound();
                 }
-                return View(task);
+
+                ViewBag.ProjectId = task.ProjectId;
+
+                var model = new TaskEditViewModel
+                {
+                    Id = task.Id,
+                    Title = task.Title,
+                    Description = task.Description,
+                    Status = task.Status,
+                    Priority = task.Priority,
+                    ProjectId = task.ProjectId,
+                    SelectedUsers = task.Assignee ?? Array.Empty<string>(),
+                    AvailableUsers = await _context.ProjectMembers
+                        .Where(pm => pm.ProjectId == task.ProjectId)
+                        .Select(pm => new SelectListItem
+                        {
+                            Value = pm.UserId,
+                            Text = pm.UserName
+                        })
+                        .ToListAsync()
+                };
+
+                return View(model);
             }
 
             // POST: Tasks/Edit/5
             [HttpPost]
             [ValidateAntiForgeryToken]
-            public async Task<IActionResult> Edit(int id, Entities.Task task)
+            public async Task<IActionResult> Edit(int id, TaskEditViewModel model)
             {
-                if (id != task.Id)
+                if (id != model.Id)
                 {
                     return NotFound();
                 }
-
-                ModelState.Remove("CreatedDate");
-                ModelState.Remove("TaskCode");
 
             if (ModelState.IsValid)
                 {
@@ -151,21 +175,19 @@ namespace OnlineAPI.Controllers
                             return NotFound();
                         }
 
-                        existingTask.Description = task.Description;
-                        existingTask.Status = task.Status;
-                        existingTask.Priority = task.Priority;
-                        existingTask.Assignee = task.Assignee;
+                        existingTask.Title = model.Title;
+                        existingTask.Description = model.Description;
+                        existingTask.Status = model.Status;
+                        existingTask.Priority = model.Priority;
+                        existingTask.Assignee = model.SelectedUsers ?? Array.Empty<string>();
                         existingTask.UpdatedDate = DateTime.UtcNow;
 
-                        Console.WriteLine($"Trying save data with created time {task.CreatedDate} TASK-{task.Id}");
-                        task.UpdatedDate = DateTime.UtcNow;
-                        task.TaskCode = $"TASK-{task.Id}";
                         _context.Update(existingTask);
                         await _context.SaveChangesAsync();
                     }
                     catch (DbUpdateConcurrencyException)
                     {
-                        if (!TaskExists(task.Id))
+                        if (!TaskExists(model.Id))
                         {
                             return NotFound();
                         }
@@ -174,10 +196,18 @@ namespace OnlineAPI.Controllers
                             throw;
                         }
                     }
-                    return RedirectToAction(nameof(Index), new { projectId = task.ProjectId });
+                    return RedirectToAction(nameof(Index), new { projectId = model.ProjectId });
                 }
-            ViewBag.Members = await GetProjectMembers(task.ProjectId);
-            return View(task);
+            model.AvailableUsers = await _context.ProjectMembers
+                .Where(pm => pm.ProjectId == model.ProjectId)
+                .Select(pm => new SelectListItem
+                {
+                    Value = pm.UserId,
+                    Text = pm.UserName
+                })
+                .ToListAsync();
+            ViewBag.ProjectId = model.ProjectId;
+            return View(model);
             }
 
             // POST: Tasks/Move

@@ -332,6 +332,8 @@
 
 
                         <form id="addMemberForm">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="ProjectId" value="@Model.Id" />
                             <div class="form-group" style="margin-bottom: 10px;">
                                 <label>Login пользователя</label>
                                 <input type="text" name="Login" class="form-control" placeholder="Введите login пользователя" required />
@@ -438,6 +440,38 @@
                 },
                 error: function() {
                     showAlert('error', 'Произошла ошибка при сохранении');
+                }
+            });
+        });
+
+        $('#addMemberForm').on('submit', function(e) {
+            e.preventDefault();
+
+            const form = $(this);
+            const formData = {
+                ProjectId: form.find('input[name="ProjectId"]').val(),
+                Login: form.find('input[name="Login"]').val(),
+                Role: form.find('select[name="Role"]').val()
+            };
+
+            $.ajax({
+                url: '@Url.Action("AddMember", "ProjectSettings")',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'RequestVerificationToken': form.find('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        showAlert('success', response.message);
+                        form[0].reset();
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showAlert('error', response.message);
+                    }
+                },
+                error: function() {
+                    showAlert('error', 'Произошла ошибка при добавлении участника');
                 }
             });
         });

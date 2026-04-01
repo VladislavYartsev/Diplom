@@ -26,7 +26,7 @@ namespace OnlineAPI.Controllers
 
             if (User.Identity.IsAuthenticated)
             {
-                return RedirectToAction("Index", "Tasks");
+                return RedirectToAction("Index", "Projects");
             }
             return View();
         }
@@ -69,7 +69,7 @@ namespace OnlineAPI.Controllers
                     new ClaimsPrincipal(claimsIdentity),
                     authProperties);
 
-                return RedirectToAction("Index", "Tasks");
+                return RedirectToAction("Index", "Projects");
             }
 
             ModelState.AddModelError("", "Invalid login attempt");
@@ -114,6 +114,13 @@ namespace OnlineAPI.Controllers
         {
             var inv = _context.Invitations.FirstOrDefault(i => i.Code == code && !i.IsUsed);
             if (inv == null) return BadRequest();
+
+            var existingUser = _context.Users.FirstOrDefault(u => u.Username == login);
+            if (existingUser != null)
+            {
+                TempData["ErrorMessage"] = "Пользователь с таким логином уже существует";
+                return RedirectToAction(nameof(Register));
+            }
 
             _context.Users.Add(new User
             {
