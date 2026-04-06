@@ -1,160 +1,92 @@
 @model OnlineAPI.Entities.TaskEditViewModel
 @{
     ViewData["Title"] = "Редактировать задачу";
-    Layout = null;
+    Layout = "_TaskFlowLayout";
 }
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Редактировать задачу - TaskFlow</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="~/css/taskboard.css">
-</head>
-<body>
-    <div class="container">
-        <div class="sidebar">
-            <div class="logo">
-                <h1><i class="fas fa-tasks"></i> <span>TaskFlow</span></h1>
-            </div>
-            <ul class="nav-menu">
-                <li><a href="@Url.Action("Index", "Tasks", new { projectId = Model.ProjectId })"><i class="fas fa-th-large"></i> <span>Доска</span></a></li>
-                <li><a href="@Url.Action("Create", "Tasks", new { projectId = Model.ProjectId })"><i class="fas fa-plus"></i> <span>Создать задачу</span></a></li>
-                <li><a href="@Url.Action("Edit", "Tasks", new { id = Model.Id })" class="active"><i class="fas fa-pen"></i> <span>Редактировать</span></a></li>
-            </ul>
+@section Sidebar {
+    <ul class="nav-menu">
+        <li><a href="@Url.Action("Index", "Tasks", new { projectId = Model.ProjectId })"><i class="fas fa-th-large"></i> <span>Доска</span></a></li>
+        <li><a href="@Url.Action("Create", "Tasks", new { projectId = Model.ProjectId })"><i class="fas fa-plus"></i> <span>Создать задачу</span></a></li>
+        <li><a href="@Url.Action("Edit", "Tasks", new { id = Model.Id })" class="active"><i class="fas fa-pen"></i> <span>Редактировать</span></a></li>
+    </ul>
+}
+
+<div class="create-project-container">
+    <div class="board-header">
+        <div class="board-title">
+            <h2>Редактирование задачи</h2>
         </div>
-
-        <div class="main-content">
-            <div class="top-bar">
-                <div class="user-actions">
-                    <div class="user-dropdown">
-                        <div class="dropdown-toggle">
-                            <div class="avatar">
-                                @if (User.Identity.IsAuthenticated)
-                                {
-                                    @((User.FindFirst("DisplayName")?.Value ?? User.Identity.Name)?[0].ToString().ToUpper())
-                                }
-                                else
-                                {
-                                    @:U
-                                }
-                            </div>
-                            <i class="fas fa-chevron-down" style="font-size: 12px; color: #6b778c;"></i>
-                        </div>
-                        <div class="dropdown-menu">
-                            <div class="user-info">
-                                @if (User.Identity.IsAuthenticated)
-                                {
-                                    <div class="user-name">@(User.FindFirst("DisplayName")?.Value ?? User.Identity.Name)</div>
-                                    <div class="user-role">Пользователь</div>
-                                }
-                                else
-                                {
-                                    <div class="user-name">Гость</div>
-                                    <div class="user-role">Не авторизован</div>
-                                }
-                            </div>
-
-                            @if (User.Identity.IsAuthenticated)
-                            {
-                                <a href="@Url.Action("Index", "Profile")" class="dropdown-item">
-                                    <i class="fas fa-user"></i>
-                                    <span>Мой профиль</span>
-                                </a>
-                                <a href="@Url.Action("Edit", "Profile")" class="dropdown-item">
-                                    <i class="fas fa-edit"></i>
-                                    <span>Редактировать профиль</span>
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <form method="post" asp-action="Logout" asp-controller="Auth" class="dropdown-item-form">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="dropdown-item">
-                                        <i class="fas fa-sign-out-alt"></i>
-                                        <span>Выйти</span>
-                                    </button>
-                                </form>
-                            }
-                            else
-                            {
-                                <a href="@Url.Action("Login", "Auth")" class="dropdown-item">
-                                    <i class="fas fa-sign-in-alt"></i>
-                                    <span>Войти</span>
-                                </a>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="create-project-container">
-                <div class="board-header">
-                    <div class="board-title">
-                        <h2>Редактирование задачи</h2>
-                    </div>
-                    <div class="board-actions">
-                        <a href="@Url.Action("Index", "Tasks", new { projectId = Model.ProjectId })" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Назад к доске</a>
-                    </div>
-                </div>
-
-                <form method="post" asp-action="Edit" asp-controller="Tasks" class="task-form">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" asp-for="Id" />
-                    <input type="hidden" asp-for="ProjectId" />
-
-                    <div class="form-section">
-                        <div class="form-group">
-                            <label asp-for="Title">Название задачи *</label>
-                            <input asp-for="Title" class="form-control" placeholder="Введите название задачи" />
-                            <span asp-validation-for="Title" class="text-danger"></span>
-                        </div>
-
-                        <div class="form-group">
-                            <label asp-for="Description">Описание</label>
-                            <textarea asp-for="Description" class="form-control" placeholder="Опишите детали задачи"></textarea>
-                            <span asp-validation-for="Description" class="text-danger"></span>
-                        </div>
-
-                        <div class="form-group">
-                            <label asp-for="Status">Статус</label>
-                            <select asp-for="Status" class="form-control" asp-items="Html.GetEnumSelectList<OnlineAPI.Entities.TaskStatus>()"></select>
-                            <span asp-validation-for="Status" class="text-danger"></span>
-                        </div>
-
-                        <div class="form-group">
-                            <label asp-for="Priority">Приоритет</label>
-                            <select asp-for="Priority" class="form-control" asp-items="Html.GetEnumSelectList<OnlineAPI.Entities.TaskPriority>()"></select>
-                            <span asp-validation-for="Priority" class="text-danger"></span>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Исполнители</label>
-                            <div class="user-select-list">
-                                @foreach (var user in Model.AvailableUsers)
-                                {
-                                    var isSelected = Model.SelectedUsers.Contains(user.Value);
-                                    <label class="user-select-item" for="edit_user_@user.Value">
-                                        <input class="user-select-input"
-                                               type="checkbox"
-                                               name="SelectedUsers"
-                                               value="@user.Value"
-                                               id="edit_user_@user.Value"
-                                               @(isSelected ? "checked" : null)>
-                                        <span class="user-select-name">@user.Text</span>
-                                    </label>
-                                }
-                            </div>
-                        </div>
-
-                        <div class="form-actions">
-                            <a href="@Url.Action("Index", "Tasks", new { projectId = Model.ProjectId })" class="btn btn-outline">Отмена</a>
-                            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+        <div class="board-actions">
+            <a href="@Url.Action("Index", "Tasks", new { projectId = Model.ProjectId })" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Назад к доске
+            </a>
         </div>
     </div>
-</body>
-</html>
+
+    <form method="post" asp-action="Edit" asp-controller="Tasks" class="task-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="ProjectId" />
+
+        <div class="form-section">
+            <div class="form-group">
+                <label asp-for="Title">Название задачи *</label>
+                <input asp-for="Title" class="form-control" placeholder="Введите название задачи" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Description">Описание</label>
+                <textarea asp-for="Description" class="form-control" placeholder="Опишите детали задачи"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Status">Статус</label>
+                <select asp-for="Status" class="form-control" asp-items="Html.GetEnumSelectList<OnlineAPI.Entities.TaskStatus>()"></select>
+                <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Priority">Приоритет</label>
+                <select asp-for="Priority" class="form-control" asp-items="Html.GetEnumSelectList<OnlineAPI.Entities.TaskPriority>()"></select>
+                <span asp-validation-for="Priority" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Deadline">Дедлайн</label>
+                <input asp-for="Deadline" type="datetime-local" class="form-control" />
+                <span asp-validation-for="Deadline" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Исполнители</label>
+                <div class="user-select-list">
+                    @foreach (var user in Model.AvailableUsers)
+                    {
+                        var isSelected = Model.SelectedUsers.Contains(user.Value);
+                        <label class="user-select-item" for="edit_user_@user.Value">
+                            <input class="user-select-input"
+                                   type="checkbox"
+                                   name="SelectedUsers"
+                                   value="@user.Value"
+                                   id="edit_user_@user.Value"
+                                   @(isSelected ? "checked" : null)>
+                            <span class="user-select-name">@user.Text</span>
+                        </label>
+                    }
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="@Url.Action("Index", "Tasks", new { projectId = Model.ProjectId })" class="btn btn-outline">Отмена</a>
+                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

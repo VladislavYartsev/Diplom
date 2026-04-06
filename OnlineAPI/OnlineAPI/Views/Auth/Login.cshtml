@@ -1,221 +1,56 @@
-﻿@model OnlineAPI.Entities.LoginViewModel
+@model OnlineAPI.Entities.LoginViewModel
 @{
     ViewData["Title"] = "Авторизация";
-    Layout = null;
+    ViewData["AuthBodyClass"] = "auth-page";
+    Layout = "_AuthLayout";
 }
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Авторизация - TaskFlow</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .login-container {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .logo {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-            .logo h1 {
-                color: #333;
-                font-size: 28px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 10px;
-            }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #333;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 6px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-            .form-control:focus {
-                outline: none;
-                border-color: #667eea;
-            }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-            .btn:hover {
-                transform: translateY(-2px);
-            }
-
-        .text-danger {
-            color: #dc3545;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        .validation-summary-errors {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            border: 1px solid #f5c6cb;
-        }
-
-            .validation-summary-errors ul {
-                list-style: none;
-                margin: 0;
-                padding: 0;
-            }
-
-        .demo-accounts {
-            margin-top: 25px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            border-left: 4px solid #667eea;
-        }
-
-            .demo-accounts h4 {
-                margin-bottom: 10px;
-                color: #333;
-            }
-
-            .demo-accounts p {
-                margin: 5px 0;
-                font-size: 14px;
-                color: #666;
-            }
-
-        .alert-error {
-            background: #fdecea;
-            color: #611a15;
-            border: 1px solid #f5c2c7;
-            padding: 12px 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-    </style>
-</head>
-<body>
-    <div class="login-container">
-        <div class="logo">
-            <h1><i class="fas fa-tasks"></i> TaskFlow</h1>
-        </div>
-
-        <form method="post" asp-action="Login" asp-controller="Auth">
-            @Html.AntiForgeryToken()
-
-            @if (ViewData.ModelState.ContainsKey("") &&
-                        ViewData.ModelState[""]!.Errors.Any())
-            {
-                <div class="alert-error">
-                    <i class="fas fa-triangle-exclamation"></i>
-                    Неверный логин или пароль
-                </div>
-            }
-
-
-            <div class="form-group">
-                <label asp-for="Username">Имя пользователя</label>
-                <input asp-for="Username" class="form-control" placeholder="Введите имя пользователя" />
-                <span asp-validation-for="Username" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Password">Пароль</label>
-                <input asp-for="Password" type="password" class="form-control" placeholder="Введите пароль" />
-                <span asp-validation-for="Password" class="text-danger"></span>
-            </div>
-            <div class="checkbox-group">
-                <input asp-for="RememberMe" type="checkbox" />
-                <label asp-for="RememberMe">Запомнить меня</label>
-            </div>
-
-            <button type="submit" class="btn">Войти в систему</button>
-        </form>
-        <div style="margin-top:20px; text-align:center;">
-            <a href="@Url.Action("Register", "Auth")"
-               style="
-           display:block;
-           padding:12px;
-           border-radius:6px;
-           text-decoration:none;
-           font-weight:600;
-           color:#667eea;
-           border:2px solid #667eea;
-           transition:all 0.2s;
-       "
-               onmouseover="this.style.background='#667eea'; this.style.color='white';"
-               onmouseout="this.style.background='transparent'; this.style.color='#667eea';">
-                Регистрация по приглашению
-            </a>
-        </div>
-        <div class="demo-accounts">
-            <h4>Демо-аккаунты:</h4>
-            <p><strong>admin / admin123</strong> - Администратор</p>
-            <p><strong>user / user123</strong> - Обычный пользователь</p>
-        </div>
+<div class="auth-card">
+    <div class="auth-brand">
+        <h1><i class="fas fa-tasks"></i> TaskFlow</h1>
     </div>
 
-    <!-- Подключение клиентской валидации -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
-</body>
-</html>
+    <form method="post" asp-action="Login" asp-controller="Auth">
+        @Html.AntiForgeryToken()
+
+        @if (ViewData.ModelState.ContainsKey("") && ViewData.ModelState[""]!.Errors.Any())
+        {
+            <div class="auth-alert">
+                <i class="fas fa-triangle-exclamation"></i>
+                Неверный логин или пароль
+            </div>
+        }
+
+        <div class="auth-form-group">
+            <label asp-for="Username" class="auth-label">Имя пользователя</label>
+            <input asp-for="Username" class="auth-input" placeholder="Введите имя пользователя" />
+            <span asp-validation-for="Username" class="text-danger"></span>
+        </div>
+
+        <div class="auth-form-group">
+            <label asp-for="Password" class="auth-label">Пароль</label>
+            <input asp-for="Password" type="password" class="auth-input" placeholder="Введите пароль" />
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+
+        <div class="auth-checkbox">
+            <input asp-for="RememberMe" type="checkbox" />
+            <label asp-for="RememberMe">Запомнить меня</label>
+        </div>
+
+        <button type="submit" class="auth-button">Войти в систему</button>
+    </form>
+
+    <a href="@Url.Action("Register", "Auth")" class="auth-link-button">Регистрация по приглашению</a>
+
+    <div class="auth-demo">
+        <h4>Демо-аккаунты</h4>
+        <p><strong>admin / admin123</strong> - Администратор</p>
+        <p><strong>user / user123</strong> - Обычный пользователь</p>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

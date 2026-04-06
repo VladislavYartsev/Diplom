@@ -1,0 +1,60 @@
+@model OnlineAPI.Entities.EditProfileViewModel
+@{
+    ViewData["Title"] = "Редактировать профиль";
+    Layout = "_TaskFlowLayout";
+}
+
+@section Sidebar {
+    <ul class="nav-menu">
+        <li><a href="@Url.Action("Index", "Projects")"><i class="fas fa-layer-group"></i> <span>Проекты</span></a></li>
+        <li><a href="@Url.Action("Index", "Profile")"><i class="fas fa-user"></i> <span>Профиль</span></a></li>
+        <li><a href="@Url.Action("Edit", "Profile")" class="active"><i class="fas fa-pen"></i> <span>Редактировать</span></a></li>
+    </ul>
+}
+
+<div class="create-project-container">
+    <div class="board-header">
+        <div class="board-title">
+            <h2>Редактирование профиля</h2>
+        </div>
+        <div class="board-actions">
+            <a href="@Url.Action("Index", "Profile")" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Назад к профилю
+            </a>
+        </div>
+    </div>
+
+    <form method="post" asp-action="Edit" asp-controller="Profile" class="task-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+
+        <div class="form-section">
+            <div class="form-group">
+                <label asp-for="Username">Логин</label>
+                <input asp-for="Username" class="form-control" placeholder="Введите новый логин" />
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="NewPassword">Новый пароль</label>
+                <input asp-for="NewPassword" type="password" class="form-control" placeholder="Оставьте пустым, если менять не нужно" />
+                <span asp-validation-for="NewPassword" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ConfirmPassword">Подтверждение пароля</label>
+                <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Повторите новый пароль" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <div class="form-actions">
+                <a href="@Url.Action("Index", "Profile")" class="btn btn-outline">Отмена</a>
+                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

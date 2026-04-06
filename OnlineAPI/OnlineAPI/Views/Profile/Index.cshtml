@@ -1,0 +1,82 @@
+@model OnlineAPI.Entities.ProfileViewModel
+@{
+    ViewData["Title"] = "Мой профиль";
+    Layout = "_TaskFlowLayout";
+}
+
+@section Sidebar {
+    <ul class="nav-menu">
+        <li><a href="@Url.Action("Index", "Projects")"><i class="fas fa-layer-group"></i> <span>Проекты</span></a></li>
+        <li><a href="@Url.Action("Index", "Profile")" class="active"><i class="fas fa-user"></i> <span>Профиль</span></a></li>
+    </ul>
+}
+
+<div class="profile-container">
+    <div class="board-header">
+        <div class="board-title">
+            <h2>Мой профиль</h2>
+        </div>
+        <div class="board-actions">
+            <a href="@Url.Action("Edit", "Profile")" class="btn btn-primary">
+                <i class="fas fa-pen"></i> Редактировать
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <div class="profile-grid">
+        <div class="profile-card profile-hero">
+            <div class="profile-avatar">@Model.Username[0].ToString().ToUpper()</div>
+            <div class="profile-name">@Model.Username</div>
+            <div class="profile-subtitle">Аккаунт участника TaskFlow</div>
+        </div>
+
+        <div class="profile-section">
+            <div class="section-title" style="margin-bottom: 18px;">
+                <i class="fas fa-chart-line"></i>
+                <span>Активность</span>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">@Model.ProjectCount</div>
+                    <div class="stat-label">Проектов</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">@Model.OwnedProjectCount</div>
+                    <div class="stat-label">Своих проектов</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">@Model.TaskCount</div>
+                    <div class="stat-label">Задач в проектах</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-section" style="grid-column: 1 / -1;">
+            <div class="section-title" style="margin-bottom: 18px;">
+                <i class="fas fa-id-card"></i>
+                <span>Данные профиля</span>
+            </div>
+            <div class="info-list">
+                <div class="info-item">
+                    <div class="info-label">Логин</div>
+                    <div class="info-value">@Model.Username</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Код приглашения</div>
+                    <div class="info-value">@(string.IsNullOrWhiteSpace(Model.InvitationCode) ? "Не использовался" : Model.InvitationCode)</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Идентификатор пользователя</div>
+                    <div class="info-value">@Model.Id</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

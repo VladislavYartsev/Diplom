@@ -1,351 +1,153 @@
-﻿@model int // projectId
+@model int
 @{
     ViewData["Title"] = "Отчеты по проекту";
-    Layout = null;
+    Layout = "_TaskFlowLayout";
 }
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Отчеты по проекту - TaskFlow</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="~/css/taskboard.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .reports-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 25px;
-        }
+@section Sidebar {
+    <ul class="nav-menu">
+        <li><a href="@Url.Action("Index", "Projects")"><i class="fas fa-layer-group"></i> <span>Проекты</span></a></li>
+        <li><a href="@Url.Action("Index", "Tasks", new { projectId = Model })"><i class="fas fa-list-check"></i> <span>Доска</span></a></li>
+        <li><a href="@Url.Action("Index", "Reports", new { projectId = Model })" class="active"><i class="fas fa-chart-pie"></i> <span>Отчеты</span></a></li>
+        <li><a href="@Url.Action("Index", "ProjectSettings", new { projectId = Model })"><i class="fas fa-cog"></i> <span>Настройки</span></a></li>
+    </ul>
+}
 
-        .reports-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #e1e5e9;
-        }
-
-        .reports-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        .report-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            padding: 25px;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 1px solid #e1e5e9;
-        }
-
-        .report-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .report-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #f4f5f7;
-        }
-
-        .report-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #172b4d;
-        }
-
-        .chart-container {
-            position: relative;
-            height: 300px;
-            margin: 20px 0;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .stat-card {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            border-left: 4px solid #0052cc;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: #172b4d;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            font-size: 14px;
-            color: #6b778c;
-        }
-
-        .filters-container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 25px;
-        }
-
-        .filter-row {
-            display: flex;
-            gap: 15px;
-            align-items: end;
-            flex-wrap: wrap;
-        }
-
-        .filter-group {
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .export-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 25px;
-            justify-content: flex-end;
-        }
-
-        .trend-indicator {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        .trend-up {
-            color: #36b37e;
-        }
-
-        .trend-down {
-            color: #ff5630;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #6b778c;
-        }
-
-        .empty-state i {
-            font-size: 48px;
-            margin-bottom: 15px;
-            color: #dfe1e6;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="sidebar">
-            <div class="logo">
-                <h1><i class="fas fa-tasks"></i> <span>TaskFlow</span></h1>
-            </div>
-            <ul class="nav-menu">
-                <li><a href="@Url.Action("Index", "Projects")"><i class="fas fa-layer-group"></i> <span>Проекты</span></a></li>
-                <li><a href="@Url.Action("Index", "Tasks", new { projectId = Model })"><i class="fas fa-list-check"></i> <span>Доска</span></a></li>
-                <li><a href="@Url.Action("Index", "Reports", new { projectId = Model })" class="active"><i class="fas fa-chart-pie"></i> <span>Отчеты</span></a></li>
-                <li><a href="@Url.Action("Index", "ProjectSettings", new { projectId = Model })"><i class="fas fa-cog"></i> <span>Настройки</span></a></li>
-            </ul>
+<div class="reports-container">
+    <div class="reports-header">
+        <div>
+            <h2>Отчеты по проекту</h2>
+            <p class="page-subtitle">Аналитика и метрики производительности</p>
         </div>
+        <div class="board-actions">
+            <a href="@Url.Action("Index", "Tasks", new { projectId = Model })" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Назад к задачам
+            </a>
+        </div>
+    </div>
 
-        <div class="main-content">
-            <div class="top-bar">
-                <div class="user-actions">
-                    <div class="user-dropdown">
-                        <div class="dropdown-toggle">
-                            <div class="avatar">
-                                @((User.FindFirst("DisplayName")?.Value ?? User.Identity.Name)?[0].ToString().ToUpper())
-                            </div>
-                            <i class="fas fa-chevron-down" style="font-size: 12px; color: #6b778c;"></i>
-                        </div>
-                        <div class="dropdown-menu">
-                            <div class="user-info">
-                                <div class="user-name">@(User.FindFirst("DisplayName")?.Value ?? User.Identity.Name)</div>
-                                <div class="user-role">Пользователь</div>
-                            </div>
-                            <a href="@Url.Action("Index", "Profile")" class="dropdown-item">
-                                <i class="fas fa-user"></i>
-                                <span>Мой профиль</span>
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <form method="post" asp-action="Logout" asp-controller="Auth" class="dropdown-item-form">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="dropdown-item">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    <span>Выйти</span>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+    <div class="filters-container">
+        <div class="filter-row">
+            <div class="form-group filter-group">
+                <label>Период анализа</label>
+                <select class="form-control" id="periodSelect">
+                    <option value="7">Последние 7 дней</option>
+                    <option value="30" selected>Последние 30 дней</option>
+                    <option value="90">Последние 90 дней</option>
+                    <option value="365">За весь год</option>
+                </select>
             </div>
+            <div class="form-group filter-group">
+                <label>Тип отчета</label>
+                <select class="form-control" id="reportType">
+                    <option value="overview" selected>Общий обзор</option>
+                    <option value="performance">Производительность</option>
+                    <option value="timeline">Временные линии</option>
+                </select>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="loadReports()">
+                <i class="fas fa-refresh"></i> Обновить отчеты
+            </button>
+        </div>
+    </div>
 
-            <div class="reports-container">
-                <div class="reports-header">
-                    <div>
-                        <h2>Отчеты по проекту</h2>
-                        <p style="color: #6b778c; margin-top: 5px;">Аналитика и метрики производительности</p>
-                    </div>
-                    <div class="board-actions">
-                        <a href="@Url.Action("Index", "Tasks", new { projectId = Model })" class="btn btn-outline">
-                            <i class="fas fa-arrow-left"></i> Назад к задачам
-                        </a>
-                    </div>
-                </div>
-
-                <div class="filters-container">
-                    <div class="filter-row">
-                        <div class="form-group filter-group">
-                            <label>Период анализа</label>
-                            <select class="form-control" id="periodSelect">
-                                <option value="7">Последние 7 дней</option>
-                                <option value="30" selected>Последние 30 дней</option>
-                                <option value="90">Последние 90 дней</option>
-                                <option value="365">За весь год</option>
-                            </select>
-                        </div>
-                        <div class="form-group filter-group">
-                            <label>Тип отчета</label>
-                            <select class="form-control" id="reportType">
-                                <option value="overview" selected>Общий обзор</option>
-                                <option value="performance">Производительность</option>
-                                <option value="timeline">Временные линии</option>
-                            </select>
-                        </div>
-                        <button class="btn btn-primary" onclick="loadReports()">
-                            <i class="fas fa-refresh"></i> Обновить отчеты
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Основные метрики -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value" id="totalTasks">0</div>
-                        <div class="stat-label">Всего задач</div>
-                        <div class="trend-indicator trend-up" id="tasksTrend">
-                            <i class="fas fa-arrow-up"></i> <span>0%</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="completedTasks">0</div>
-                        <div class="stat-label">Завершено</div>
-                        <div class="trend-indicator trend-up" id="completedTrend">
-                            <i class="fas fa-arrow-up"></i> <span>0%</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="completionRate">0%</div>
-                        <div class="stat-label">Процент выполнения</div>
-                        <div class="trend-indicator trend-up" id="rateTrend">
-                            <i class="fas fa-arrow-up"></i> <span>0%</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="avgCompletionTime">0д</div>
-                        <div class="stat-label">Среднее время выполнения</div>
-                        <div class="trend-indicator trend-down" id="timeTrend">
-                            <i class="fas fa-arrow-down"></i> <span>0%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Графики -->
-                <div class="reports-grid">
-                    <!-- Круговая диаграмма статусов -->
-                    <div class="report-card">
-                        <div class="report-header">
-                            <div class="report-title">Распределение задач по статусам</div>
-                            <i class="fas fa-chart-pie" style="color: #0052cc;"></i>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="statusChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- График динамики -->
-                    <div class="report-card">
-                        <div class="report-header">
-                            <div class="report-title">Динамика завершения задач</div>
-                            <i class="fas fa-chart-line" style="color: #36b37e;"></i>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="trendChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Приоритеты -->
-                    <div class="report-card">
-                        <div class="report-header">
-                            <div class="report-title">Распределение по приоритетам</div>
-                            <i class="fas fa-exclamation-circle" style="color: #ff5630;"></i>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="priorityChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Назначения -->
-                    <div class="report-card">
-                        <div class="report-header">
-                            <div class="report-title">Задачи по исполнителям</div>
-                            <i class="fas fa-users" style="color: #6554c0;"></i>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="assigneeChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Кнопки экспорта -->
-                <div class="export-actions">
-                    <button class="btn btn-outline" onclick="exportToPDF()">
-                        <i class="fas fa-file-pdf"></i> Экспорт в PDF
-                    </button>
-                    <button class="btn btn-outline" onclick="exportToExcel()">
-                        <i class="fas fa-file-excel"></i> Экспорт в Excel
-                    </button>
-                    <button class="btn btn-primary" onclick="printReports()">
-                        <i class="fas fa-print"></i> Печать отчетов
-                    </button>
-                </div>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" id="totalTasks">0</div>
+            <div class="stat-label">Всего задач</div>
+            <div class="trend-indicator trend-up" id="tasksTrend">
+                <i class="fas fa-arrow-up"></i> <span>0%</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="completedTasks">0</div>
+            <div class="stat-label">Завершено</div>
+            <div class="trend-indicator trend-up" id="completedTrend">
+                <i class="fas fa-arrow-up"></i> <span>0%</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="completionRate">0%</div>
+            <div class="stat-label">Процент выполнения</div>
+            <div class="trend-indicator trend-up" id="rateTrend">
+                <i class="fas fa-arrow-up"></i> <span>0%</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="avgCompletionTime">0д</div>
+            <div class="stat-label">Среднее время выполнения</div>
+            <div class="trend-indicator trend-down" id="timeTrend">
+                <i class="fas fa-arrow-down"></i> <span>0%</span>
             </div>
         </div>
     </div>
 
+    <div class="reports-grid">
+        <div class="report-card">
+            <div class="report-header">
+                <div class="report-title">Распределение задач по статусам</div>
+                <i class="fas fa-chart-pie" style="color: #0052cc;"></i>
+            </div>
+            <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <div class="report-card">
+            <div class="report-header">
+                <div class="report-title">Динамика завершения задач</div>
+                <i class="fas fa-chart-line" style="color: #36b37e;"></i>
+            </div>
+            <div class="chart-container">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="report-card">
+            <div class="report-header">
+                <div class="report-title">Распределение по приоритетам</div>
+                <i class="fas fa-exclamation-circle" style="color: #ff5630;"></i>
+            </div>
+            <div class="chart-container">
+                <canvas id="priorityChart"></canvas>
+            </div>
+        </div>
+
+        <div class="report-card">
+            <div class="report-header">
+                <div class="report-title">Задачи по исполнителям</div>
+                <i class="fas fa-users" style="color: #6554c0;"></i>
+            </div>
+            <div class="chart-container">
+                <canvas id="assigneeChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="export-actions">
+        <button type="button" class="btn btn-outline" onclick="exportToPDF()">
+            <i class="fas fa-file-pdf"></i> Экспорт в PDF
+        </button>
+        <button type="button" class="btn btn-outline" onclick="exportToExcel()">
+            <i class="fas fa-file-excel"></i> Экспорт в Excel
+        </button>
+        <button type="button" class="btn btn-primary" onclick="printReports()">
+            <i class="fas fa-print"></i> Печать отчетов
+        </button>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Глобальные переменные для хранения данных
         let charts = {};
 
-        // Загрузка отчетов при старте
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             loadReports();
         });
 
-        
         async function loadReports() {
-                  const period = document.getElementById('periodSelect').value;
-            const reportType = document.getElementById('reportType').value;
+            const period = document.getElementById('periodSelect').value;
 
             try {
                 const projectId = @Model;
@@ -353,7 +155,6 @@
                 const metricsResponse = await fetch(`/Reports/GetProjectMetrics?projectId=${projectId}&period=${period}`);
                 const metrics = await metricsResponse.json();
 
-             
                 const statusResponse = await fetch(`/Reports/GetStatusDistribution?projectId=${projectId}`);
                 const statusDistribution = await statusResponse.json();
 
@@ -368,21 +169,18 @@
                     trendData: generateTrendData(period),
                     assigneeDistribution: generateAssigneeData()
                 });
-
             } catch (error) {
                 console.error('Ошибка загрузки отчетов:', error);
                 alert('Ошибка при загрузке отчетов');
             }
         }
 
-        // Обновление метрик
         function updateMetrics(metrics) {
             document.getElementById('totalTasks').textContent = metrics.totalTasks;
             document.getElementById('completedTasks').textContent = metrics.completedTasks;
             document.getElementById('completionRate').textContent = metrics.completionRate + '%';
             document.getElementById('avgCompletionTime').textContent = metrics.avgCompletionTime + 'д';
 
-            // Обновление трендов
             updateTrend('tasksTrend', metrics.trends.tasks);
             updateTrend('completedTrend', metrics.trends.completed);
             updateTrend('rateTrend', metrics.trends.rate);
@@ -391,9 +189,6 @@
 
         function updateTrend(elementId, value) {
             const element = document.getElementById(elementId);
-            const span = element.querySelector('span');
-            span.textContent = Math.abs(value) + '%';
-
             if (value >= 0) {
                 element.className = 'trend-indicator trend-up';
                 element.innerHTML = `<i class="fas fa-arrow-up"></i> <span>${Math.abs(value)}%</span>`;
@@ -403,17 +198,15 @@
             }
         }
 
-        // Создание графиков
-               function createCharts(data) {
+        function createCharts(data) {
             createStatusChart(data.statusDistribution);
             createTrendChart(data.trendData);
             createPriorityChart(data.priorityDistribution);
             createAssigneeChart(data.assigneeDistribution);
         }
 
-              function createStatusChart(distribution) {
+        function createStatusChart(distribution) {
             const ctx = document.getElementById('statusChart').getContext('2d');
-
             if (charts.statusChart) {
                 charts.statusChart.destroy();
             }
@@ -437,16 +230,7 @@
                             position: 'bottom',
                             labels: {
                                 padding: 20,
-                                usePointStyle: true,
-                                generateLabels(chart) {
-                                    const data = chart.data;
-                                    return data.labels.map((label, i) => ({
-                                        text: label,
-                                        fillStyle: data.datasets[0].backgroundColor[i],
-                                        strokeStyle: data.datasets[0].backgroundColor[i],
-                                        index: i
-                                    }));
-                                }
+                                usePointStyle: true
                             }
                         }
                     }
@@ -456,7 +240,6 @@
 
         function createTrendChart(trendData) {
             const ctx = document.getElementById('trendChart').getContext('2d');
-
             if (charts.trendChart) {
                 charts.trendChart.destroy();
             }
@@ -489,10 +272,7 @@
                     maintainAspectRatio: false,
                     scales: {
                         y: {
-                            beginAtZero: true,
-                            grid: {
-                                drawBorder: false
-                            }
+                            beginAtZero: true
                         },
                         x: {
                             grid: {
@@ -506,13 +286,12 @@
 
         function createPriorityChart(distribution) {
             const ctx = document.getElementById('priorityChart').getContext('2d');
-
             if (charts.priorityChart) {
                 charts.priorityChart.destroy();
             }
 
             charts.priorityChart = new Chart(ctx, {
-                type: 'pie',    
+                type: 'pie',
                 data: {
                     labels: distribution.map(item => item.priority),
                     datasets: [{
@@ -540,7 +319,6 @@
 
         function createAssigneeChart(distribution) {
             const ctx = document.getElementById('assigneeChart').getContext('2d');
-
             if (charts.assigneeChart) {
                 charts.assigneeChart.destroy();
             }
@@ -562,10 +340,7 @@
                     maintainAspectRatio: false,
                     scales: {
                         y: {
-                            beginAtZero: true,
-                            grid: {
-                                drawBorder: false
-                            }
+                            beginAtZero: true
                         },
                         x: {
                             grid: {
@@ -582,14 +357,13 @@
             });
         }
 
-                function generateTrendData(period) {
-            // Генерируем данные для графика трендов
+        function generateTrendData(period) {
             const labels = [];
             const completed = [];
             const created = [];
 
             let days;
-            switch(period) {
+            switch (period) {
                 case '7': days = 7; break;
                 case '30': days = 30; break;
                 case '90': days = 90; break;
@@ -601,25 +375,20 @@
                     labels.push(`День ${i + 1}`);
                 } else if (days <= 90) {
                     labels.push(`Неделя ${Math.floor(i / 7) + 1}`);
-                    i += 6; // Пропускаем 7 дней за раз
+                    i += 6;
                 } else {
                     labels.push(`Месяц ${i + 1}`);
-                    i += 29; // Пропускаем 30 дней за раз
+                    i += 29;
                 }
 
                 completed.push(Math.floor(Math.random() * 10) + 5);
                 created.push(Math.floor(Math.random() * 8) + 7);
             }
 
-            return {
-                labels: labels,
-                completed: completed,
-                created: created
-            };
+            return { labels, completed, created };
         }
 
         function generateAssigneeData() {
-            // Демо-данные для исполнителей
             return [
                 { assignee: 'Иванов И.', count: 12, color: '#0052cc' },
                 { assignee: 'Петров А.', count: 8, color: '#36b37e' },
@@ -629,20 +398,16 @@
             ];
         }
 
-        // Функции экспорта
         function exportToPDF() {
             alert('Функция экспорта в PDF будет реализована');
-            // Здесь будет логика экспорта в PDF
         }
 
         function exportToExcel() {
             alert('Функция экспорта в Excel будет реализована');
-            // Здесь будет логика экспорта в Excel
         }
 
         function printReports() {
             window.print();
         }
     </script>
-</body>
-</html>
+}

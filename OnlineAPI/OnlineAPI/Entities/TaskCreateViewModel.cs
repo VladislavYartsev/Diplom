@@ -11,6 +11,7 @@ namespace OnlineAPI.Entities
         public string Title { get; set; }
         public string Description { get; set; }
         public TaskPriority Priority { get; set; }
+        public DateTime? Deadline { get; set; }
         public int ProjectID { get; set; }
 
         public string SelectedUsersData { get; set; } 
