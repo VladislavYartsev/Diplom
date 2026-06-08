@@ -1,145 +1,21 @@
-﻿@model List<OnlineAPI.Entities.User>
+@model List<OnlineAPI.Entities.User>
 @{
-    Layout = null; // отключаем основной Layout
+    ViewData["Title"] = "SuperAdmin";
+    ViewData["AuthBodyClass"] = "auth-page auth-page--admin";
+    Layout = "_AuthLayout";
 }
 
-<style>
-    .superadmin-page {
-        padding: 25px;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-        .superadmin-page .superadmin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-
-        .superadmin-page .superadmin-title {
-            font-size: 22px;
-            font-weight: 600;
-            color: #172b4d;
-        }
-
-        .superadmin-page .superadmin-badge {
-            background: #ff5630;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        /* Карточка */
-        .superadmin-page .superadmin-card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            border: 1px solid #e1e5e9;
-        }
-
-        /* Таблица */
-        .superadmin-page .superadmin-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-            .superadmin-page .superadmin-table th {
-                text-align: left;
-                font-size: 13px;
-                font-weight: 600;
-                color: #6b778c;
-                padding: 10px;
-                border-bottom: 2px solid #dfe1e6;
-            }
-
-            .superadmin-page .superadmin-table td {
-                padding: 12px 10px;
-                font-size: 14px;
-                color: #172b4d;
-                border-bottom: 1px solid #f4f5f7;
-            }
-
-            .superadmin-page .superadmin-table tr:hover {
-                background: #f4f5f7;
-            }
-
-        /* Код приглашения */
-        .superadmin-page .invite-code {
-            font-family: monospace;
-            background: #f4f5f7;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-
-        /* Панель действий */
-        .superadmin-page .superadmin-actions {
-            margin-top: 20px;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        /* Кнопка */
-        .superadmin-page .btn.btn-primary {
-            background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%);
-            color: white !important;
-            padding: 8px 14px;
-            font-weight: 600;
-            border-radius: 6px;
-            border: none;
-            font-size: 14px;
-        }
-
-            .superadmin-page .btn.btn-primary:hover {
-                background: linear-gradient(135deg, #9333ea 0%, #6b21a8 100%);
-            }
-
-        /* Результат генерации */
-        .superadmin-page .superadmin-result {
-            margin-top: 15px;
-            padding: 12px;
-            background: #e9f2ff;
-            border-left: 4px solid #0052cc;
-            border-radius: 4px;
-            font-size: 14px;
-            color: #0052cc;
-            display: none;
-        }
-
-        /* Опасная зона */
-        .superadmin-page .superadmin-warning {
-            margin-top: 25px;
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-            padding: 15px;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-</style>
-
 <div class="superadmin-page">
-
     <div class="superadmin-header">
         <div class="superadmin-title">
             Управление пользователями
             <span class="superadmin-badge">SUPER ADMIN</span>
         </div>
 
-        <a href="/SuperAdmin/Logout" class="btn btn-outline btn-sm">
-            Выйти
-        </a>
+        <a href="/SuperAdmin/Logout" class="auth-button--light">Выйти</a>
     </div>
 
     <div class="superadmin-card">
-
         <table class="superadmin-table">
             <thead>
                 <tr>
@@ -149,19 +25,19 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var u in Model)
+                @foreach (var user in Model)
                 {
                     <tr>
-                        <td>@u.Id</td>
-                        <td>@u.Username</td>
+                        <td>@user.Id</td>
+                        <td>@user.Username</td>
                         <td>
-                            @if (!string.IsNullOrEmpty(u.InvintaionCode))
+                            @if (!string.IsNullOrEmpty(user.InvintaionCode))
                             {
-                                <span class="invite-code">@u.InvintaionCode</span>
+                                <span class="invite-code">@user.InvintaionCode</span>
                             }
                             else
                             {
-                                <span style="color:#6b778c;">—</span>
+                                <span class="text-muted">-</span>
                             }
                         </td>
                     </tr>
@@ -170,33 +46,30 @@
         </table>
 
         <div class="superadmin-actions">
-            <button id="gen" class="btn btn-primary">
-                Сгенерировать код приглашения
-            </button>
+            <button id="gen" class="auth-button" type="button">Сгенерировать код приглашения</button>
         </div>
 
         <div id="result" class="superadmin-result"></div>
-
     </div>
 
     <div class="superadmin-warning">
-        ⚠️ Аккаунт супер-администратора предназначен <b>только</b> для управления кодами приглашений.
-        Использование его для работы запрещено.
+        Аккаунт супер-администратора предназначен только для управления кодами приглашений.
+        Использование его для повседневной работы запрещено.
     </div>
-
 </div>
 
-
-<script>
-    document.getElementById("gen").onclick = function () {
-        fetch('/superadmin/generatecode', {
-            method: 'POST'
-        })
-        .then(r => r.json())
-        .then(d => {
-            const result = document.getElementById("result");
-            result.style.display = "block";
-            result.innerHTML = "Код приглашения: <b>" + d.code + "</b>";
-        });
-    };
-</script>
+@section Scripts {
+    <script>
+        document.getElementById("gen").onclick = function () {
+            fetch('/SuperAdmin/GenerateCode', {
+                method: 'POST'
+            })
+            .then(r => r.json())
+            .then(d => {
+                const result = document.getElementById("result");
+                result.style.display = "block";
+                result.innerHTML = "Код приглашения: <b>" + d.code + "</b>";
+            });
+        };
+    </script>
+}

@@ -1,5 +1,5 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ru">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,49 +10,31 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">OnlineAPI</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                <a class="navbar-brand" asp-controller="Projects" asp-action="Index">OnlineAPI</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+                <div id="mainNavbar" class="collapse navbar-collapse">
+                    <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
+                            <a class="nav-link text-dark" asp-controller="Projects" asp-action="Index">Проекты</a>
                         </li>
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <!-- В верхней панели -->
-    <div class="top-bar">
-        <div class="user-actions">
-            <span style="margin-right: 15px; color: #666;">Привет, @ViewBag.UserName!</span>
-            <form method="post" asp-action="Logout" asp-controller="Auth" style="display: inline;">
-                @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-outline" style="padding: 6px 12px;">
-                    <i class="fas fa-sign-out-alt"></i> Выйти
-                </button>
-            </form>
-            <div class="avatar">@(ViewBag.UserName?[0].ToString().ToUpper() ?? "U")</div>
-        </div>
-    </div>
+    <main class="container pb-3">
+        @RenderBody()
+    </main>
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2025 - OnlineAPI - <a asp-area="" asp-page="/Privacy">Privacy</a>
+            &copy; 2026 - OnlineAPI
         </div>
     </footer>
 

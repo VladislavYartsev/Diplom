@@ -1,0 +1,55 @@
+# --- Reports / documents (do not leak) ---
+tmp/
+reports/
+output/
+generated/
+
+# Generated Word/Office artifacts
+~$*.docx
+~$*.doc
+~$*.xlsx
+~$*.pptx
+
+# Project-specific generated reports / templates
+TaskFlow_PP12_report.docx
+*PP12*report*.docx
+*report*.docx
+template_*.docx
+
+# Optional: exported docs (uncomment if needed)
+# *.pdf
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# ML / data artifacts (can be large / sensitive)
+*.pt
+*.pth
+*.bin
+*.onnx
+*.joblib
+
+# Optional: ignore all Pickle models (uncomment if you don't want to commit them)
+# *.pkl
+# Optional: keep the main model even if you ignore all *.pkl
+# !AIFastApi/kanban_priority_model.pkl
+
+# --- .NET / Visual Studio ---
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.log
+.vs/
+
+# --- OS ---
+.DS_Store
+Thumbs.db

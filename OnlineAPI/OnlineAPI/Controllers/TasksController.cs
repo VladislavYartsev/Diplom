@@ -44,6 +44,7 @@ namespace OnlineAPI.Controllers
             ViewBag.ProjectId = projectId;
             ViewBag.ProjectName = project?.Name ?? "Без названия";
             ViewBag.MemberNames = memberNames;
+            ViewBag.CurrentUserId = userId;
             return View(tasks);
         }
         
@@ -103,6 +104,7 @@ namespace OnlineAPI.Controllers
                 Title = model.Title,
                 Description = model.Description,
                 Priority = model.Priority,
+                Deadline = NormalizeDeadline(model.Deadline),
                 ProjectId = model.ProjectID,
                 TaskCode = $"TASK-{nextId}",
                 Status = Entities.TaskStatus.ToDo,
@@ -139,6 +141,7 @@ namespace OnlineAPI.Controllers
                     Description = task.Description,
                     Status = task.Status,
                     Priority = task.Priority,
+                    Deadline = task.Deadline?.ToLocalTime(),
                     ProjectId = task.ProjectId,
                     SelectedUsers = task.Assignee ?? Array.Empty<string>(),
                     AvailableUsers = await _context.ProjectMembers
@@ -179,6 +182,7 @@ namespace OnlineAPI.Controllers
                         existingTask.Description = model.Description;
                         existingTask.Status = model.Status;
                         existingTask.Priority = model.Priority;
+                        existingTask.Deadline = NormalizeDeadline(model.Deadline);
                         existingTask.Assignee = model.SelectedUsers ?? Array.Empty<string>();
                         existingTask.UpdatedDate = DateTime.UtcNow;
 
@@ -274,6 +278,21 @@ namespace OnlineAPI.Controllers
                     Text = m.UserName
                 })
                 .ToListAsync();
+        }
+
+        private static DateTime? NormalizeDeadline(DateTime? deadline)
+        {
+            if (!deadline.HasValue)
+            {
+                return null;
+            }
+
+            return deadline.Value.Kind switch
+            {
+                DateTimeKind.Utc => deadline.Value,
+                DateTimeKind.Local => deadline.Value.ToUniversalTime(),
+                _ => DateTime.SpecifyKind(deadline.Value, DateTimeKind.Local).ToUniversalTime()
+            };
         }
 
 

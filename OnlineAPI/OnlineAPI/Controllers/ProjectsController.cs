@@ -133,6 +133,8 @@ namespace OnlineAPI.Controllers
 
             var projectMember = await _context.ProjectMembers
                 .Include(pm => pm.Project)
+                    .ThenInclude(p => p.Tasks)
+                .Include(pm => pm.Project)
                     .ThenInclude(p => p.Members)
                 .FirstOrDefaultAsync(pm => pm.ProjectId == id && pm.UserId == userId);
 

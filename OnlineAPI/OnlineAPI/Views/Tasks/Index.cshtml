@@ -1,7 +1,7 @@
-﻿@model IEnumerable<OnlineAPI.Entities.Task>
+@model IEnumerable<OnlineAPI.Entities.Task>
 @{
     ViewData["Title"] = "Доска задач";
-    Layout = null;
+    Layout = "_TaskFlowLayout";
 }
 
 @functions {
@@ -21,6 +21,15 @@
         return assignee;
     }
 
+    private List<string> GetAssigneeNames(string[]? assignees)
+    {
+        return (assignees ?? Array.Empty<string>())
+            .Where(a => !string.IsNullOrWhiteSpace(a))
+            .Select(ResolveAssigneeDisplay)
+            .Where(a => !string.IsNullOrWhiteSpace(a))
+            .ToList();
+    }
+
     private string GetInitial(string? fullName)
     {
         if (string.IsNullOrWhiteSpace(fullName))
@@ -29,306 +38,321 @@
         }
 
         var parts = fullName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var first = parts[0][0];
-        return char.ToUpper(first).ToString();
+        return char.ToUpper(parts[0][0]).ToString();
     }
 
-    private string GetAssigneeBadge(string[]? assignees)
+    private string GetPriorityLabel(OnlineAPI.Entities.TaskPriority priority)
     {
-        if (assignees == null || assignees.Length == 0)
+        return priority switch
         {
-            return "?";
-        }
-
-        return GetInitial(ResolveAssigneeDisplay(assignees[0]));
+            OnlineAPI.Entities.TaskPriority.Low => "Низкий",
+            OnlineAPI.Entities.TaskPriority.Medium => "Средний",
+            OnlineAPI.Entities.TaskPriority.High => "Высокий",
+            _ => priority.ToString()
+        };
     }
 }
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow - Управление задачами</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="~/css/taskboard.css">
+@section Sidebar {
+    <ul class="nav-menu">
+        <li><a href="@Url.Action("Index", "Projects")"><i class="fas fa-layer-group"></i> <span>Проекты</span></a></li>
+        <li><a href="@Url.Action("Index", "Tasks", new { projectId = ViewBag.ProjectId })" class="active"><i class="fas fa-list-check"></i> <span>Доска</span></a></li>
+        <li><a href="@Url.Action("Index", "Reports", new { projectId = ViewBag.ProjectId })"><i class="fas fa-chart-bar"></i> <span>Отчеты</span></a></li>
+        <li><a href="@Url.Action("Index", "ProjectSettings", new { projectId = ViewBag.ProjectId })"><i class="fas fa-cog"></i> <span>Настройки</span></a></li>
+    </ul>
+}
 
-</head>
-<body>
-    <div class="container">
-        <!-- Сайдбар -->
-        <div class="sidebar">
-            <div class="logo">
-                <h1><i class="fas fa-tasks"></i> <span>TaskFlow</span></h1>
-            </div>
-            <ul class="nav-menu">
-                <li><a href="@Url.Action("Index", "Projects")"><i class="fas fa-layer-group"></i> <span>Проекты</span></a></li>
-                <li><a href="@Url.Action("Index", "Tasks", new { projectId = ViewBag.ProjectId })" class="active"><i class="fas fa-list-check"></i> <span>Доска</span></a></li>
-                <li><a href="@Url.Action("Index", "Reports", new { projectId = ViewBag.ProjectId})"><i class="fas fa-chart-bar"></i> <span>Отчеты</span></a></li>
-                <li><a href="@Url.Action("Index", "ProjectSettings", new { projectId = ViewBag.ProjectId })"><i class="fas fa-cog"></i> <span>Настройки</span></a></li>
-            </ul>
-        </div>
+@section TopBarStart {
+    <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input id="taskSearch" type="text" placeholder="Поиск задач...">
+    </div>
+}
 
-        <!-- Основное содержимое -->
-        <div class="main-content">
-            <!-- Верхняя панель -->
-            <div class="top-bar">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Поиск задач...">
+@section TopBarActions {
+    <button type="button" class="btn btn-outline" aria-label="Уведомления">
+        <i class="fas fa-bell"></i>
+    </button>
+}
+
+<div class="board-header">
+    <div class="board-title">
+        <h2>Доска проекта: @ViewBag.ProjectName</h2>
+    </div>
+    <div class="board-actions">
+        <span class="board-hint"><i class="fas fa-filter"></i> Фильтры применяются ниже</span>
+        <a href="@Url.Action("Create", "Tasks", new { projectId = ViewBag.ProjectId })" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Создать задачу
+        </a>
+    </div>
+</div>
+
+<div class="filters">
+    <button type="button" class="filter-item active" data-filter="all"><i class="fas fa-layer-group"></i> Все</button>
+    <button type="button" class="filter-item" data-filter="mine"><i class="fas fa-user"></i> Мои задачи</button>
+    <button type="button" class="filter-item" data-filter="recent"><i class="fas fa-clock"></i> Недавние</button>
+</div>
+
+<div class="board">
+    @foreach (var statusGroup in new[]
+    {
+        new { Status = OnlineAPI.Entities.TaskStatus.ToDo, Label = "Нужно сделать", Color = "#ff5630" },
+        new { Status = OnlineAPI.Entities.TaskStatus.InProgress, Label = "В работе", Color = "#ffab00" },
+        new { Status = OnlineAPI.Entities.TaskStatus.Review, Label = "На проверке", Color = "#0052cc" },
+        new { Status = OnlineAPI.Entities.TaskStatus.Done, Label = "Готово", Color = "#36b37e" }
+    })
+    {
+        <div class="column">
+            <div class="column-header">
+                <div class="column-title">
+                    <i class="fas fa-circle" style="color: @statusGroup.Color;"></i>
+                    <span>@statusGroup.Label</span>
+                    <span class="task-count">@Model.Count(t => t.Status == statusGroup.Status)</span>
                 </div>
-                <div class="user-actions">
-                    <button class="btn btn-outline"><i class="fas fa-bell"></i></button>
+                <div class="add-task">
+                    <a href="@Url.Action("Create", "Tasks", new { projectId = ViewBag.ProjectId })"><i class="fas fa-plus"></i></a>
+                </div>
+            </div>
+            <div class="tasks-container">
+                @foreach (var task in Model.Where(t => t.Status == statusGroup.Status))
+                {
+                    var assigneeNames = GetAssigneeNames(task.Assignee);
+                    var searchText = $"{task.Title} {task.Description} {task.TaskCode}".ToLowerInvariant();
+                    var assigneeIds = string.Join(",", task.Assignee ?? Array.Empty<string>());
+                    var visibleAssignees = assigneeNames.Take(3).ToList();
+                    var hiddenCount = Math.Max(0, assigneeNames.Count - visibleAssignees.Count);
+                    var updatedTicks = (task.UpdatedDate ?? task.CreatedDate).ToUniversalTime().Ticks;
 
-                    <!-- Выпадающее меню профиля -->
-                    <div class="user-dropdown">
-                        <div class="dropdown-toggle">
-                            <div class="avatar">
-                                @if (User.Identity.IsAuthenticated)
-                                {
-                                    @((User.FindFirst("DisplayName")?.Value ?? User.Identity.Name)?[0].ToString().ToUpper())
-                                }
-                                else
-                                {
-                                    @:U
-                                }
-                            </div>
-                            <i class="fas fa-chevron-down" style="font-size: 12px; color: #6b778c;"></i>
-                        </div>
-                        <div class="dropdown-menu">
-                            <div class="user-info">
-                                @if (User.Identity.IsAuthenticated)
-                                {
-                                    <div class="user-name">@(User.FindFirst("DisplayName")?.Value ?? User.Identity.Name)</div>
-                                    <div class="user-role">Пользователь</div>
-                                }
-                                else
-                                {
-                                    <div class="user-name">Гость</div>
-                                    <div class="user-role">Не авторизован</div>
-                                }
-                            </div>
+                    <div class="task board-task"
+                         data-task-card="true"
+                         data-assignees="@assigneeIds"
+                         data-search="@searchText"
+                         data-updated="@updatedTicks">
+                        <div class="task-priority priority-@task.Priority.ToString().ToLower()"></div>
 
-                            @if (User.Identity.IsAuthenticated)
-                            {
-                                <a href="@Url.Action("Index", "Profile")" class="dropdown-item">
-                                    <i class="fas fa-user"></i>
-                                    <span>Мой профиль</span>
-                                </a>
-                                <a href="@Url.Action("Edit", "Profile")" class="dropdown-item">
-                                    <i class="fas fa-edit"></i>
-                                    <span>Редактировать профиль</span>
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <form method="post" asp-action="Logout" asp-controller="Auth" class="dropdown-item-form">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="dropdown-item">
-                                        <i class="fas fa-sign-out-alt"></i>
-                                        <span>Выйти</span>
+                        <div class="task-summary">
+                            <div class="task-summary-main">
+                                <div class="task-title-row">
+                                    <div class="task-title">@task.Title</div>
+                                    <button type="button" class="task-toggle" aria-expanded="false" aria-label="Показать описание">
+                                        <i class="fas fa-chevron-down task-expand-icon"></i>
                                     </button>
+                                </div>
+                                <div class="task-preview">
+                                    @(string.IsNullOrWhiteSpace(task.Description) ? "Описание отсутствует" : task.Description)
+                                </div>
+                            </div>
+                            <div class="task-meta task-meta-compact">
+                                <span class="task-meta-pill"><i class="fas fa-list"></i> @task.TaskCode</span>
+                                <span class="task-meta-pill"><i class="fas fa-flag"></i> @GetPriorityLabel(task.Priority)</span>
+                            </div>
+                            <div class="task-footer">
+                                <div class="task-assignee-stack" title="@(assigneeNames.Any() ? string.Join(", ", assigneeNames) : "Исполнители не назначены")">
+                                    @if (visibleAssignees.Any())
+                                    {
+                                        @foreach (var assigneeName in visibleAssignees)
+                                        {
+                                            <div class="assignee-avatar" title="@assigneeName">@GetInitial(assigneeName)</div>
+                                        }
+                                        @if (hiddenCount > 0)
+                                        {
+                                            <div class="assignee-avatar assignee-avatar-more" title="Еще @hiddenCount исполнителей">+@hiddenCount</div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="assignee-avatar assignee-avatar-empty" title="Исполнители не назначены">?</div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="task-details">
+                            <div class="task-details-text">
+                                @(string.IsNullOrWhiteSpace(task.Description) ? "Описание отсутствует" : task.Description)
+                            </div>
+                        </div>
+
+                        <div class="task-actions">
+                            @if (task.Status == OnlineAPI.Entities.TaskStatus.ToDo)
+                            {
+                                <form method="post" action="@Url.Action("Move", "Tasks")">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="taskId" value="@task.Id" />
+                                    <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.InProgress" />
+                                    <button type="submit" class="action-btn"><i class="fas fa-arrow-right"></i> В работу</button>
                                 </form>
                             }
-                            else
+                            @if (task.Status == OnlineAPI.Entities.TaskStatus.InProgress)
                             {
-                                <a href="@Url.Action("Login", "Auth")" class="dropdown-item">
-                                    <i class="fas fa-sign-in-alt"></i>
-                                    <span>Войти</span>
-                                </a>
+                                <form method="post" action="@Url.Action("Move", "Tasks")">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="taskId" value="@task.Id" />
+                                    <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.ToDo" />
+                                    <button type="submit" class="action-btn"><i class="fas fa-arrow-left"></i> Назад</button>
+                                </form>
+                                <form method="post" action="@Url.Action("Move", "Tasks")">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="taskId" value="@task.Id" />
+                                    <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.Review" />
+                                    <button type="submit" class="action-btn">В ревью <i class="fas fa-arrow-right"></i></button>
+                                </form>
                             }
+                            @if (task.Status == OnlineAPI.Entities.TaskStatus.Review)
+                            {
+                                <form method="post" action="@Url.Action("Move", "Tasks")">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="taskId" value="@task.Id" />
+                                    <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.InProgress" />
+                                    <button type="submit" class="action-btn"><i class="fas fa-arrow-left"></i> Назад</button>
+                                </form>
+                                <form method="post" action="@Url.Action("Move", "Tasks")">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="taskId" value="@task.Id" />
+                                    <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.Done" />
+                                    <button type="submit" class="action-btn">Готово <i class="fas fa-arrow-right"></i></button>
+                                </form>
+                            }
+                            @if (task.Status == OnlineAPI.Entities.TaskStatus.Done)
+                            {
+                                <form method="post" action="@Url.Action("Move", "Tasks")">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="taskId" value="@task.Id" />
+                                    <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.Review" />
+                                    <button type="submit" class="action-btn"><i class="fas fa-arrow-left"></i> Назад</button>
+                                </form>
+                            }
+                            <a href="@Url.Action("Edit", "Tasks", new { id = task.Id })" class="action-btn"><i class="fas fa-edit"></i> Редактировать</a>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Заголовок доски -->
-            <div class="board-header">
-                <div class="board-title">
-                    <h2>Доска проекта: @ViewBag.ProjectName</h2>
-                </div>
-                <div class="board-actions">
-                    <button class="btn btn-outline"><i class="fas fa-filter"></i> Фильтр</button>
-                    <a href="@Url.Action("Create", "Tasks", new { projectId = ViewBag.ProjectId })" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Создать задачу
-                    </a>
-                </div>
-            </div>
-
-            <!-- Фильтры -->
-            <div class="filters">
-                <div class="filter-item active"><i class="fas fa-user"></i> Мои задачи</div>
-                <div class="filter-item"><i class="fas fa-clock"></i> Недавние</div>
-                <div class="filter-item"><i class="fas fa-fire"></i> Срочные</div>
-            </div>
-
-            <!-- Доска задач -->
-            <div class="board">
-                <!-- Колонка: Нужно сделать -->
-                <div class="column">
-                    <div class="column-header">
-                        <div class="column-title">
-                            <i class="fas fa-circle" style="color: #ff5630;"></i>
-                            <span>Нужно сделать</span>
-                            <span class="task-count">@Model.Count(t => t.Status == OnlineAPI.Entities.TaskStatus.ToDo)</span>
-                        </div>
-                        <div class="add-task">
-                            <a href="@Url.Action("Create", "Tasks", new { projectId = ViewBag.ProjectId })"><i class="fas fa-plus"></i></a>
-                        </div>
-                    </div>
-                    <div class="tasks-container">
-                        @foreach (var task in Model.Where(t => t.Status == OnlineAPI.Entities.TaskStatus.ToDo))
-                        {
-                            <div class="task">
-                                <div class="task-priority priority-@task.Priority.ToString().ToLower()"></div>
-                                <div class="task-title">@task.Title</div>
-                                <div class="task-desc">@task.Description</div>
-                                <div class="task-meta">
-                                    <span><i class="fas fa-list"></i> @task.TaskCode</span>
-                                    <div class="task-assignee">
-                                    <div class="assignee-avatar">@GetAssigneeBadge(task.Assignee)</div>
-                                    </div>
-                                </div>
-                                <div class="task-actions">
-                                    <form method="post" action="@Url.Action("Move", "Tasks")">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="taskId" value="@task.Id" />
-                                        <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.InProgress" />
-                                        <button type="submit" class="action-btn"><i class="fas fa-arrow-right"></i> В работу</button>
-                                    </form>
-                                    <a href="@Url.Action("Edit", "Tasks", new { id = task.Id })" class="action-btn"><i class="fas fa-edit"></i> Редактировать</a>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-
-                <!-- Колонка: В работе -->
-                <div class="column">
-                    <div class="column-header">
-                        <div class="column-title">
-                            <i class="fas fa-circle" style="color: #ffab00;"></i>
-                            <span>В работе</span>
-                            <span class="task-count">@Model.Count(t => t.Status == OnlineAPI.Entities.TaskStatus.InProgress)</span>
-                        </div>
-                        <div class="add-task">
-                            <a href="@Url.Action("Create", "Tasks")"><i class="fas fa-plus"></i></a>
-                        </div>
-                    </div>
-                    <div class="tasks-container">
-                        @foreach (var task in Model.Where(t => t.Status == OnlineAPI.Entities.TaskStatus.InProgress))
-                        {
-                            <div class="task">
-                                <div class="task-priority priority-@task.Priority.ToString().ToLower()"></div>
-                                <div class="task-title">@task.Title</div>
-                                <div class="task-desc">@task.Description</div>
-                                <div class="task-meta">
-                                    <span><i class="fas fa-list"></i> @task.TaskCode</span>
-                                    <div class="task-assignee">
-                                    <div class="assignee-avatar">@GetAssigneeBadge(task.Assignee)</div>
-                                    </div>
-                                </div>
-                                <div class="task-actions">
-                                    <form method="post" action="@Url.Action("Move", "Tasks")">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="taskId" value="@task.Id" />
-                                        <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.ToDo" />
-                                        <button type="submit" class="action-btn"><i class="fas fa-arrow-left"></i> Назад</button>
-                                    </form>
-                                    <form method="post" action="@Url.Action("Move", "Tasks")">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="taskId" value="@task.Id" />
-                                        <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.Review" />
-                                        <button type="submit" class="action-btn">В ревью <i class="fas fa-arrow-right"></i></button>
-                                    </form>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-
-                <!-- Колонка: На проверке -->
-                <div class="column">
-                    <div class="column-header">
-                        <div class="column-title">
-                            <i class="fas fa-circle" style="color: #0052cc;"></i>
-                            <span>На проверке</span>
-                            <span class="task-count">@Model.Count(t => t.Status == OnlineAPI.Entities.TaskStatus.Review)</span>
-                        </div>
-                        <div class="add-task">
-                            <a href="@Url.Action("Create", "Tasks", new {ProjectId = ViewBag.ProjectId})"><i class="fas fa-plus"></i></a>
-                        </div>
-                    </div>
-                    <div class="tasks-container">
-                        @foreach (var task in Model.Where(t => t.Status == OnlineAPI.Entities.TaskStatus.Review))
-                        {
-                            <div class="task">
-                                <div class="task-priority priority-@task.Priority.ToString().ToLower()"></div>
-                                <div class="task-title">@task.Title</div>
-                                <div class="task-desc">@task.Description</div>
-                                <div class="task-meta">
-                                    <span><i class="fas fa-list"></i> @task.TaskCode</span>
-                                    <div class="task-assignee">
-                                    <div class="assignee-avatar">@GetAssigneeBadge(task.Assignee)</div>
-                                    </div>
-                                </div>
-                                <div class="task-actions">
-                                    <form method="post" action="@Url.Action("Move", "Tasks")">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="taskId" value="@task.Id" />
-                                        <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.InProgress" />
-                                        <button type="submit" class="action-btn"><i class="fas fa-arrow-left"></i> Назад</button>
-                                    </form>
-                                    <form method="post" action="@Url.Action("Move", "Tasks")">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="taskId" value="@task.Id" />
-                                        <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.Done" />
-                                        <button type="submit" class="action-btn">Готово <i class="fas fa-arrow-right"></i></button>
-                                    </form>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-
-                <!-- Колонка: Готово -->
-                <div class="column">
-                    <div class="column-header">
-                        <div class="column-title">
-                            <i class="fas fa-circle" style="color: #36b37e;"></i>
-                            <span>Готово</span>
-                            <span class="task-count">@Model.Count(t => t.Status == OnlineAPI.Entities.TaskStatus.Done)</span>
-                        </div>
-                        <div class="add-task">
-                            <a href="@Url.Action("Create", "Tasks")"><i class="fas fa-plus"></i></a>
-                        </div>
-                    </div>
-                    <div class="tasks-container">
-                        @foreach (var task in Model.Where(t => t.Status == OnlineAPI.Entities.TaskStatus.Done))
-                        {
-                            <div class="task">
-                                <div class="task-priority priority-@task.Priority.ToString().ToLower()"></div>
-                                <div class="task-title">@task.Title</div>
-                                <div class="task-desc">@task.Description</div>
-                                <div class="task-meta">
-                                    <span><i class="fas fa-list"></i> @task.TaskCode</span>
-                                    <div class="task-assignee">
-                                    <div class="assignee-avatar">@GetAssigneeBadge(task.Assignee)</div>
-                                    </div>
-                                </div>
-                                <div class="task-actions">
-                                    <form method="post" action="@Url.Action("Move", "Tasks")">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="taskId" value="@task.Id" />
-                                        <input type="hidden" name="newStatus" value="@OnlineAPI.Entities.TaskStatus.Review" />
-                                        <button type="submit" class="action-btn"><i class="fas fa-arrow-left"></i> Назад</button>
-                                    </form>
-                                    <a href="@Url.Action("Edit", "Tasks", new { id = task.Id })" class="action-btn"><i class="fas fa-edit"></i> Редактировать</a>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
+                }
             </div>
         </div>
-    </div>
-</body>
-</html>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const currentUserId = '@ViewBag.CurrentUserId';
+            const searchInput = document.getElementById('taskSearch');
+            const filterButtons = Array.from(document.querySelectorAll('.filter-item[data-filter]'));
+            const getTaskCards = () => Array.from(document.querySelectorAll('.board-task'));
+            let activeFilter = 'all';
+
+            function isMine(card) {
+                const assignees = (card.dataset.assignees || '').split(',').filter(Boolean);
+                return assignees.includes(currentUserId);
+            }
+
+            function isRecent(card) {
+                const updatedTicks = Number(card.dataset.updated || 0);
+                const sevenDays = 7 * 24 * 60 * 60 * 1000;
+                if (!updatedTicks) {
+                    return false;
+                }
+
+                const updatedDate = new Date((updatedTicks - 621355968000000000) / 10000);
+                return Date.now() - updatedDate.getTime() <= sevenDays;
+            }
+
+            function matchesFilter(card) {
+                switch (activeFilter) {
+                    case 'mine':
+                        return isMine(card);
+                    case 'recent':
+                        return isRecent(card);
+                    default:
+                        return true;
+                }
+            }
+
+            function matchesSearch(card) {
+                const query = (searchInput.value || '').trim().toLowerCase();
+                if (!query) {
+                    return true;
+                }
+
+                return (card.dataset.search || '').includes(query);
+            }
+
+            function applyFilters() {
+                getTaskCards().forEach(card => {
+                    const visible = matchesFilter(card) && matchesSearch(card);
+                    card.style.display = visible ? '' : 'none';
+                });
+            }
+
+            function collapseAllCards() {
+                getTaskCards().forEach(card => {
+                    card.classList.remove('expanded');
+
+                    const toggle = card.querySelector('.task-toggle');
+                    if (toggle) {
+                        toggle.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
+
+            function toggleCard(card) {
+                const toggle = card.querySelector('.task-toggle');
+                const shouldExpand = !card.classList.contains('expanded');
+
+                collapseAllCards();
+
+                if (shouldExpand) {
+                    card.classList.add('expanded');
+                    if (toggle) {
+                        toggle.setAttribute('aria-expanded', 'true');
+                    }
+                }
+            }
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    activeFilter = button.dataset.filter;
+                    filterButtons.forEach(item => item.classList.remove('active'));
+                    button.classList.add('active');
+                    applyFilters();
+                });
+            });
+
+            searchInput.addEventListener('input', applyFilters);
+
+            document.addEventListener('click', function (event) {
+                const toggle = event.target.closest('.task-toggle');
+                if (!toggle) {
+                    return;
+                }
+
+                const card = toggle.closest('.board-task');
+                if (!card) {
+                    return;
+                }
+
+                toggleCard(card);
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key !== 'Enter' && event.key !== ' ') {
+                    return;
+                }
+
+                const toggle = event.target.closest('.task-toggle');
+                if (!toggle) {
+                    return;
+                }
+
+                const card = toggle.closest('.board-task');
+                if (!card) {
+                    return;
+                }
+
+                event.preventDefault();
+                toggleCard(card);
+            });
+
+            applyFilters();
+        })();
+    </script>
+}

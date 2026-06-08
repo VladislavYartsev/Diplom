@@ -9,6 +9,7 @@ namespace OnlineAPI.Entities
         public string Description { get; set; }
         public TaskStatus Status { get; set; }
         public TaskPriority Priority { get; set; }
+        public DateTime? Deadline { get; set; }
         public int ProjectId { get; set; }
         public string[] SelectedUsers { get; set; } = Array.Empty<string>();
         public List<SelectListItem> AvailableUsers { get; set; } = new();

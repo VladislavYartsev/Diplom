@@ -1,0 +1,162 @@
+@model OnlineAPI.Entities.ProjectDetailsViewModel
+@{
+    ViewData["Title"] = "Детали проекта";
+    Layout = "_TaskFlowLayout";
+
+    var todoCount = Model.Tasks.Count(t => t.Status == OnlineAPI.Entities.TaskStatus.ToDo);
+    var inProgressCount = Model.Tasks.Count(t => t.Status == OnlineAPI.Entities.TaskStatus.InProgress);
+    var reviewCount = Model.Tasks.Count(t => t.Status == OnlineAPI.Entities.TaskStatus.Review);
+    var doneCount = Model.Tasks.Count(t => t.Status == OnlineAPI.Entities.TaskStatus.Done);
+}
+
+@functions {
+    private string GetStatusLabel(OnlineAPI.Entities.TaskStatus status)
+    {
+        return status switch
+        {
+            OnlineAPI.Entities.TaskStatus.ToDo => "Нужно сделать",
+            OnlineAPI.Entities.TaskStatus.InProgress => "В работе",
+            OnlineAPI.Entities.TaskStatus.Review => "На проверке",
+            OnlineAPI.Entities.TaskStatus.Done => "Готово",
+            _ => status.ToString()
+        };
+    }
+
+    private string GetRoleLabel(OnlineAPI.Entities.ProjectRole role)
+    {
+        return role switch
+        {
+            OnlineAPI.Entities.ProjectRole.Owner => "Владелец",
+            OnlineAPI.Entities.ProjectRole.Admin => "Администратор",
+            _ => "Участник"
+        };
+    }
+}
+
+@section Sidebar {
+    <ul class="nav-menu">
+        <li><a href="@Url.Action("Index", "Projects")" class="active"><i class="fas fa-layer-group"></i> <span>Проекты</span></a></li>
+        <li><a href="@Url.Action("Index", "Profile")"><i class="fas fa-user"></i> <span>Профиль</span></a></li>
+    </ul>
+}
+
+<div class="details-container">
+    <div class="board-header">
+        <div class="board-title">
+            <h2>Детали проекта</h2>
+        </div>
+        <div class="board-actions">
+            <a href="@Url.Action("Index", "Projects")" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Назад к проектам
+            </a>
+            <a href="@Url.Action("Index", "Tasks", new { projectId = Model.Project.Id })" class="btn btn-primary">
+                <i class="fas fa-th-large"></i> Открыть доску
+            </a>
+        </div>
+    </div>
+
+    <div class="details-grid">
+        <div class="details-card">
+            <div class="details-title">@Model.Project.Name</div>
+            <div class="details-subtitle">
+                @(string.IsNullOrWhiteSpace(Model.Project.Description) ? "Описание проекта пока не добавлено." : Model.Project.Description)
+            </div>
+
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-value">@Model.Tasks.Count</div>
+                    <div class="summary-label">Всего задач</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value">@Model.Project.Members.Count</div>
+                    <div class="summary-label">Участников</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value">@doneCount</div>
+                    <div class="summary-label">Завершено</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value">@Model.Project.CreatedDate.ToString("dd.MM.yyyy")</div>
+                    <div class="summary-label">Дата создания</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="details-card">
+            <div class="section-title" style="margin-bottom: 18px;">
+                <i class="fas fa-users"></i>
+                <span>Участники</span>
+            </div>
+            <div class="member-list">
+                @foreach (var member in Model.Project.Members.OrderByDescending(m => m.Role == OnlineAPI.Entities.ProjectRole.Owner).ThenBy(m => m.UserName))
+                {
+                    <div class="member-item">
+                        <div class="member-meta">
+                            <div class="member-avatar">@member.UserName[0].ToString().ToUpper()</div>
+                            <div>
+                                <div style="font-weight: 600; color: #172b4d;">@member.UserName</div>
+                                <div class="text-muted">В проекте с @member.JoinedDate.ToString("dd.MM.yyyy")</div>
+                            </div>
+                        </div>
+                        <span class="role-badge @(member.Role == OnlineAPI.Entities.ProjectRole.Owner ? "role-owner" : string.Empty)">
+                            @GetRoleLabel(member.Role)
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="details-card" style="grid-column: 1 / -1;">
+            <div class="section-title" style="margin-bottom: 18px;">
+                <i class="fas fa-list-check"></i>
+                <span>Состояние задач</span>
+            </div>
+            <div class="summary-grid" style="margin-bottom: 20px;">
+                <div class="summary-card">
+                    <div class="summary-value">@todoCount</div>
+                    <div class="summary-label">Нужно сделать</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value">@inProgressCount</div>
+                    <div class="summary-label">В работе</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value">@reviewCount</div>
+                    <div class="summary-label">На проверке</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value">@doneCount</div>
+                    <div class="summary-label">Готово</div>
+                </div>
+            </div>
+
+            <div class="task-list">
+                @if (Model.Tasks.Any())
+                {
+                    @foreach (var task in Model.Tasks.OrderByDescending(t => t.UpdatedDate ?? t.CreatedDate))
+                    {
+                        var statusClass = task.Status.ToString().ToLower();
+                        <div class="task-item">
+                            <div class="task-meta">
+                                <div class="task-priority priority-@task.Priority.ToString().ToLower()" style="margin-bottom: 0;"></div>
+                                <div>
+                                    <div style="font-weight: 600; color: #172b4d;">@task.Title</div>
+                                    <div class="text-muted">@(string.IsNullOrWhiteSpace(task.Description) ? "Без описания" : task.Description)</div>
+                                </div>
+                            </div>
+                            <span class="status-badge status-@statusClass">@GetStatusLabel(task.Status)</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>Пока нет задач</h3>
+                        <p>Создайте первую задачу для этого проекта.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

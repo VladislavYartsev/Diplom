@@ -8,10 +8,12 @@ namespace OnlineAPI.DTOs
 
     {
         private readonly HttpClient _httpClient;
+        private readonly string _serviceBaseUrl;
 
         public ServiceAI(HttpClient httpClient)
         {
             _httpClient = httpClient;
+            _serviceBaseUrl = Environment.GetEnvironmentVariable("AI_SERVICE_URL") ?? "http://localhost:8000";
         }
 
         public async Task<string> PredictPriorityAsync(string title, string description)
@@ -26,7 +28,7 @@ namespace OnlineAPI.DTOs
 
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync("http://localhost:8000/predict", content);
+            var response = await _httpClient.PostAsync($"{_serviceBaseUrl}/predict", content);
             response.EnsureSuccessStatusCode();
 
             var responseJson = await response.Content.ReadAsStringAsync();
@@ -36,7 +38,7 @@ namespace OnlineAPI.DTOs
             string result = null;
             while (true)
             {
-                var statusResponse = await _httpClient.GetAsync($"http://localhost:8000/predict/{taskId}");
+                var statusResponse = await _httpClient.GetAsync($"{_serviceBaseUrl}/predict/{taskId}");
                 statusResponse.EnsureSuccessStatusCode();
 
                 var statusJson = await statusResponse.Content.ReadAsStringAsync();

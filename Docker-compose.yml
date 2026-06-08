@@ -10,8 +10,6 @@ services:
       POSTGRES_DB: taskflow
       POSTGRES_USER: taskflow
       POSTGRES_PASSWORD: taskflow
-    ports:
-      - "5432:5432"
     volumes:
       - taskflow_postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -23,8 +21,6 @@ services:
   taskflow-redis:
     image: redis:7
     container_name: taskflow-redis
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -35,7 +31,7 @@ services:
     build: ./AIFastApi
     container_name: taskflow-ai
     ports:
-      - "8000:8000"
+      - "8001:8000"
     depends_on:
       - taskflow-redis
       - taskflow-db
@@ -49,7 +45,7 @@ services:
     build: ./OnlineAPI
     container_name: taskflow-web
     ports:
-      - "5000:8080"
+      - "5001:8080"
     depends_on:
       - taskflow-db
       - taskflow-ai
@@ -57,7 +53,7 @@ services:
       ConnectionStrings__DefaultConnection: Host=taskflow-db;Port=5432;Database=taskflow;Username=taskflow;Password=taskflow
       AI_SERVICE_URL: http://taskflow-ai:8000
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -36,6 +36,8 @@ namespace OnlineAPI.Entities
         
         public string[] Assignee { get; set; } = Array.Empty<string>();
 
+        public DateTime? Deadline { get; set; }
+
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
         public DateTime? UpdatedDate { get; set; }

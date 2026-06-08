@@ -1,0 +1,73 @@
+@{
+    var displayName = User.FindFirst("DisplayName")?.Value ?? User.Identity?.Name ?? "Гость";
+    var initial = string.IsNullOrWhiteSpace(displayName)
+        ? "U"
+        : displayName.Trim()[0].ToString().ToUpperInvariant();
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - TaskFlow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="~/css/taskboard.css" asp-append-version="true" />
+    @await RenderSectionAsync("Head", required: false)
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="logo">
+                <h1><i class="fas fa-tasks"></i> <span>TaskFlow</span></h1>
+            </div>
+            @RenderSection("Sidebar", required: true)
+        </aside>
+
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="top-bar-start">
+                    @await RenderSectionAsync("TopBarStart", required: false)
+                </div>
+                <div class="user-actions">
+                    @await RenderSectionAsync("TopBarActions", required: false)
+
+                    <div class="user-dropdown">
+                        <div class="dropdown-toggle">
+                            <div class="avatar">@initial</div>
+                            <i class="fas fa-chevron-down dropdown-caret"></i>
+                        </div>
+                        <div class="dropdown-menu">
+                            <div class="user-info">
+                                <div class="user-name">@displayName</div>
+                                <div class="user-role">Пользователь</div>
+                            </div>
+                            <a href="@Url.Action("Index", "Profile")" class="dropdown-item">
+                                <i class="fas fa-user"></i>
+                                <span>Мой профиль</span>
+                            </a>
+                            <a href="@Url.Action("Edit", "Profile")" class="dropdown-item">
+                                <i class="fas fa-pen"></i>
+                                <span>Редактировать профиль</span>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <form method="post" asp-action="Logout" asp-controller="Auth" class="dropdown-item-form">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="dropdown-item">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Выйти</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <main class="app-main">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,90 @@
+version: "3.9"
+
+services:
+  taskflow-db:
+    image: postgres:16
+    container_name: taskflow-db
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-taskflow}
+      POSTGRES_USER: ${POSTGRES_USER:-taskflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taskflow}
+    ports:
+      - "5432:5432"
+    volumes:
+      - taskflow_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "taskflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  taskflow-redis:
+    image: redis:7
+    container_name: taskflow-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  taskflow-ai:
+    image: ${TASKFLOW_AI_IMAGE}
+    container_name: taskflow-ai
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      taskflow-redis:
+        condition: service_healthy
+      taskflow-db:
+        condition: service_healthy
+    environment:
+      REDIS_URL: ${REDIS_URL:-redis://taskflow-redis:6379/0}
+      RUBERT_MODEL_DIR: ${RUBERT_MODEL_DIR:-/app/models/rubert-priority}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  taskflow-ai-worker:
+    image: ${TASKFLOW_AI_IMAGE}
+    container_name: taskflow-ai-worker
+    restart: always
+    command: celery -A App.tasks.celery_app worker --loglevel=info
+    depends_on:
+      taskflow-redis:
+        condition: service_healthy
+      taskflow-ai:
+        condition: service_healthy
+    environment:
+      REDIS_URL: ${REDIS_URL:-redis://taskflow-redis:6379/0}
+      RUBERT_MODEL_DIR: ${RUBERT_MODEL_DIR:-/app/models/rubert-priority}
+
+  taskflow-web:
+    image: ${TASKFLOW_WEB_IMAGE}
+    container_name: taskflow-web
+    restart: always
+    ports:
+      - "5000:8080"
+    depends_on:
+      taskflow-db:
+        condition: service_healthy
+      taskflow-ai:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:-Host=taskflow-db;Port=5432;Database=taskflow;Username=taskflow;Password=taskflow}
+      AI_SERVICE_URL: ${AI_SERVICE_URL:-http://taskflow-ai:8000}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  taskflow_postgres_data:
+
