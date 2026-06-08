@@ -85,6 +85,8 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     @await Html.PartialAsync("_ValidationScriptsPartial")
     <script>
+        const aiServiceUrl = `${window.location.protocol}//${window.location.hostname}:8001`;
+
         function debounce(func, wait) {
             let timeout;
             return function () {
@@ -115,7 +117,7 @@
             $("#priorityLoading").show();
 
             $.ajax({
-                url: "http://localhost:8000/predict",
+                url: `${aiServiceUrl}/predict`,
                 type: "POST",
                 contentType: "application/json",
                 data: JSON.stringify({ title: title, description: description }),
@@ -123,7 +125,7 @@
                     const taskId = response.task_id;
 
                     const interval = setInterval(function () {
-                        $.getJSON(`http://localhost:8000/predict/${taskId}`, function (result) {
+                        $.getJSON(`${aiServiceUrl}/predict/${taskId}`, function (result) {
                             if (result.priority) {
                                 $("#taskPriority").val(mapPriorityToValue(result.priority));
                                 $("#priorityLoading").hide();
